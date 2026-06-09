@@ -1,19 +1,28 @@
+# порты контейнера
+service:
+  port: 80
+containerPort: 80
+
+# стратегии репликации
 replicas: 1
 revisionHistoryLimit: 15
 strategy:
   type: Recreate
-service:
-  port: 80
+
+# данные образа
+image:
+  repository: "lakenotocean" 
+  name: sausage-frontend
+  tag: latest
+
+# сеть
 ingress:
   host: front-nevskiy-va.students-projects.ru
   path: /
   pathType: Prefix
   tlsSecret: 2sem-students-projects-wildcard-secret
-containerPort: 80
-image:
-  repository: "" 
-  name: sausage-frontend
-  tag: latest
+
+# запрос ресурсов
 resources:
   requests:
     memory: "128Mi"

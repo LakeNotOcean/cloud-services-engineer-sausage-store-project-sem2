@@ -1,15 +1,21 @@
-image: YOUR_DOCKERHUB/sausage-backend-report:latest
+# порты контейнера
+env:
+  port: "8080"  
 containerPort: 8080
+
+# стратегии репликации
 replicas: 1
 revisionHistoryLimit: 15
 strategy:
   type: Recreate
+
+# данные образа
 image:
-  repository: ""
+  repository: "lakenotocean"
   name: sausage-backend-report
   tag: latest
-env:
-  port: "8080"  
+
+# запрос ресурсов
 resources:
   requests:
     memory: "128Mi"
@@ -17,6 +23,8 @@ resources:
   limits:
     memory: "256Mi"
     cpu: "200m"
+
+# проверка
 livenessProbe:
   enabled: true
   path: /api/v1/health
@@ -27,6 +35,8 @@ readinessProbe:
   path: /api/v1/health
   initialDelaySeconds: 5
   periodSeconds: 10
+
+# hpa
 hpa:
   enabled: true
   minReplicas: 1

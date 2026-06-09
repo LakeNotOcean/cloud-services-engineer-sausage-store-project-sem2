@@ -1,5 +1,5 @@
 global:
-  imageRegistry: "myregistry.example.com" 
+  imageRegistry: "lakenotocean" 
   imagePullPolicy: Always
 
   postgresDbName: "sausage_store"

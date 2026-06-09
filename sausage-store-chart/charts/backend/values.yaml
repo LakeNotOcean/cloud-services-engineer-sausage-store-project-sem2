@@ -1,12 +1,20 @@
+# аннотации Pormetheus
 annotations:
   path: /actuator/prometheus
   port: "8080"
   scrape: "true"
+
+# пути артефактов
 env:
   reportPath: "/logs/reports"
   logPath: "/logs"
+
+# порты контейнера
 service:
   port: 8080
+containerPort: 8080
+
+# стратегия репликации
 revisionHistoryLimit: 15
 replicas: 1
 strategy: 
@@ -14,11 +22,15 @@ strategy:
     rollingUpdate:
       maxUnavailable: 1
       maxSurge: 1
+
+# данные образа
 image:
-  repository: "" 
+  repository: "lakenotocean" 
   name: sausage-backend
   tag: latest
 imagePullPolicy: Always
+
+# запрос ресурсов
 resources:
   requests:
     memory: "256Mi"
@@ -26,7 +38,8 @@ resources:
   limits:
     memory: "512Mi"
     cpu: "1"
-containerPort: 8080
+
+# проверка
 livenessProbe:
   enabled: true
   path: /actuator/health
@@ -37,6 +50,8 @@ readinessProbe:
   path: /actuator/health
   initialDelaySeconds: 5
   periodSeconds: 10
+
+# vpa 
 vpa:
   updatePolicy:
     updateMode: "Off"
