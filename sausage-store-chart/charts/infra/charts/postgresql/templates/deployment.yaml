@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+  labels:
+    {{- include "postgresql.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-{{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-{{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ .Values.image | default "postgres:13-alpine" }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.global.postgresDbName | default "sausage_store" }}
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory | default "256Mi" }}
+              cpu: {{ .Values.resources.requests.cpu | default "100m" }}
+            limits:
+              memory: {{ .Values.resources.limits.memory | default "512Mi" }}
+              cpu: {{ .Values.resources.limits.cpu | default "500m" }}
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - $(POSTGRES_USER)
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - $(POSTGRES_USER)
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-{{ .Chart.Name }}-pvc

@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-mongodb-init
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "5"
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: mongodb-init
+          image: mongo:7.0
+          command:
+            - /bin/sh
+            - -c
+            - |
+              mongosh --host {{ .Release.Name }}-mongodb-service \
+                      --username "$MONGO_INITDB_ROOT_USERNAME" \
+                      --password "$MONGO_INITDB_ROOT_PASSWORD" \
+                      --eval "
+                        db = db.getSiblingDB('${REPORT_DB}');
+                        db.createUser({
+                          user: '${REPORT_USER}',
+                          pwd: '${REPORT_PASSWORD}',
+                          roles: [ { role: 'readWrite', db: '${REPORT_DB}' } ]
+                        });
+                      "
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
+                  key: MONGO_INITDB_ROOT_PASSWORD
+            - name: REPORT_DB
+              value: {{ .Values.global.reportDbName }}
+            - name: REPORT_USER
+              value: {{ .Values.global.reportDbUser }}
+            - name: REPORT_PASSWORD
+              value: {{ .Values.global.reportDbPassword }}

@@ -1,0 +1,46 @@
+annotations:
+  path: /actuator/prometheus
+  port: "8080"
+  scrape: "true"
+env:
+  reportPath: "/logs/reports"
+  logPath: "/logs"
+service:
+  port: 8080
+revisionHistoryLimit: 15
+replicas: 1
+strategy: 
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+image:
+  repository: "" 
+  name: sausage-backend
+  tag: latest
+imagePullPolicy: Always
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "1"
+containerPort: 8080
+livenessProbe:
+  enabled: true
+  path: /actuator/health
+  initialDelaySeconds: 10
+  periodSeconds: 15
+readinessProbe:
+  enabled: true
+  path: /actuator/health
+  initialDelaySeconds: 5
+  periodSeconds: 10
+vpa:
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: backend
+      controlledResources: ["cpu", "memory"]

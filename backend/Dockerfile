@@ -15,6 +15,13 @@ RUN mvn package -Dversion.application=${VERSION}
 FROM openjdk:16-jdk-alpine
 ARG VERSION=${VERSION}
 WORKDIR /app
+
+LABEL maintainer="ch3shirsins@yandex.ru" \
+    description="Cloud Services Engineer Docker Project Sem2 Spring Backend-Report" \
+    version="1.0.0" \
+    security.capabilities="minimal"
+
+
 # создаём пользователя jaruser
 RUN addgroup --system jaruser \
     && adduser -S -s /bin/false -G jaruser jaruser -D -H \

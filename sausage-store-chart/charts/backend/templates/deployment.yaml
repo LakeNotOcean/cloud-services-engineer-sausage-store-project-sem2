@@ -5,13 +5,7 @@ metadata:
   name: {{ .Release.Name }}-{{ .Chart.Name }}
   namespace: {{ .Release.Namespace }}
   labels:
-    app.kubernetes.io/name: {{ .Chart.Name }}
-    app.kubernetes.io/instance: "{{ .Release.Name }}"
-    app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
-    app.kubernetes.io/managed-by: "{{ .Release.Service }}"
-    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    app.kubernetes.io/component: {{ .Chart.Name }}
-    app.kubernetes.io/part-of: {{ .Release.Name }}
+    {{- include "backend.labels" . | nindent 4 }}
 spec:
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   replicas: {{ .Values.replicas }}
@@ -31,24 +25,21 @@ spec:
     spec:
       containers:
         - name: {{ .Chart.Name }}
-          image: {{ .Values.image }}
+          image:  "{{ .Values.image.repository | default .Values.global.imageRegistry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           env:
             - name: SPRING_DATASOURCE_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
-                  key: postgres_uri
+              value: "jdbc:postgresql://{{ .Release.Name }}-postgresql-service:{{ .Values.global.postgresPort }}/{{ .Values.global.postgresDbName }}"
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
-                configMapKeyRef:
-                  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
-                  key: postgres_user
+                secretKeyRef:
+                  name: {{ .Release.Name }}-postgresql-secret
+                  key: POSTGRES_USER
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
-                configMapKeyRef:
-                  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
-                  key: postgres_password
+                secretKeyRef:
+                  name: {{ .Release.Name }}-postgresql-secret
+                  key: POSTGRES_PASSWORD
             - name: REPORT_PATH
               valueFrom:
                 configMapKeyRef:
@@ -64,23 +55,22 @@ spec:
           ports:
             - name: {{ .Chart.Name }}
               containerPort: {{ .Values.containerPort }}
+          {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
-{{ toYaml .Values.livenessProbe | indent 12 }} 
-      volumes:
-      - name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
-        configMap:
-          name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
-          items:
-            - key: postgres_uri
-              path: postgres_uri
-            - key: postgres_user
-              path: postgres_user
-            - key: postgres_password
-              path: postgres_password
-            - key: report_path
-              path: report_path
-            - key: log_path
-              path: log_path
+            httpGet:
+              path: {{ .Values.livenessProbe.path }}
+              port: {{ .Values.containerPort }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.path }}
+              port: {{ .Values.containerPort }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          {{- end }}
 ---
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler

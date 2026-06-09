@@ -1,32 +1,51 @@
-# Start from the latest golang base image
-FROM golang:latest as builder
+# сборка Golang приложения
+FROM golang:1.26-alpine AS builder
 
-# Set the Current Working Directory inside the container
+# установка git и сертификатов (может потребоваться)
+RUN apk add --no-cache git ca-certificates
+
 WORKDIR /app
-
-# Copy go mod and sum files
 COPY go.mod go.sum ./
-
-# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
 RUN go mod download
 
-# Copy the source from the current directory to the Working Directory inside the container
 COPY . .
 
-# Build the Go app
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+# аргументы для кросс-компиляции (при необходимости)
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
 
+# компиляция статического бинарника
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go build -ldflags="-w -s" -o /api .
 
-######## Start a new stage from scratch #######
-FROM alpine:latest  
+# финальный этап, запуск основного приложения
+FROM alpine:3.22.4
 
-WORKDIR /root/
+RUN apk add --no-cache wget
 
-# Copy the Pre-built binary file from the previous stage
-COPY --from=builderer /app/main .
+LABEL maintainer="ch3shirsins@yandex.ru" \
+    description="Cloud Services Engineer Docker Project Sem2 Golang Backend-Report" \
+    version="1.0.0" \
+    security.capabilities="minimal"
 
-# Expose port 8080 to the outside world
+# переменные окружения приложения (можно переопределить)
+ENV PORT=8080 \
+    DB=mongodb://localhost:27017/reports
+
+# создаём непривилегированного пользователя
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# копируем корневые сертификаты и бинарник
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --chown=appuser:appgroup --from=builder /api /api
+
+USER appuser
+WORKDIR /app
+
 EXPOSE 8080
 
-# Command to run the executable
-CMD ["/app/main"] 
+# проверка готовности через health-эндпоинт
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 -O /dev/null http://localhost:8080/api/v1/health || exit 1
+
+CMD ["/api"]

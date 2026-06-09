@@ -1,0 +1,928 @@
+﻿# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\Chart.yaml
+---
+apiVersion: v2
+type: application
+name: sausage-store
+description: Sausage Store Helm Chart
+
+version: 0.1.0
+appVersion: "latest"
+
+dependencies:
+  - name: backend
+    version: 0.1.0
+  - name: backend-report
+    version: 0.1.0
+  - name: frontend
+    version: 0.1.0
+  - name: infra
+    version: 0.1.0
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend\Chart.yaml
+---
+apiVersion: v2
+type: application
+name: backend
+description: backend Helm Chart
+
+version: 0.1.0
+appVersion: "latest"
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend\templates\_helpers.tpl
+{{- define "backend.labels" -}}
+app.kubernetes.io/name: {{ .Chart.Name }}
+app.kubernetes.io/instance: "{{ .Release.Name }}"
+app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+app.kubernetes.io/component: {{ .Chart.Name }}
+app.kubernetes.io/part-of: {{ .Release.Name }}
+{{- end }}  
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend\templates\configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+data:
+  report_path: {{ .Values.env.reportPath }}
+  log_path: {{ .Values.env.logPath }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend\templates\deployment.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+spec:
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  replicas: {{ .Values.replicas }}
+  strategy:
+{{ toYaml .Values.strategy | indent 4 }} 
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-{{ .Chart.Name }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: {{ .Values.annotations.path }}
+        prometheus.io/port: "{{ .Values.annotations.port }}"
+        prometheus.io/scrape: "{{ .Values.annotations.scrape }}"
+      labels:
+        app: {{ .Release.Name }}-{{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image:  "{{ .Values.image.repository | default .Values.global.imageRegistry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://{{ .Release.Name }}-postgresql-service:{{ .Values.global.postgresPort }}/{{ .Values.global.postgresDbName }}"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-postgresql-secret
+                  key: POSTGRES_USER
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-postgresql-secret
+                  key: POSTGRES_PASSWORD
+            - name: REPORT_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+                  key: report_path
+            - name: LOG_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+                  key: log_path
+          resources:
+{{ toYaml .Values.resources | indent 12 }} 
+          ports:
+            - name: {{ .Chart.Name }}
+              containerPort: {{ .Values.containerPort }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.livenessProbe.path }}
+              port: {{ .Values.containerPort }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.path }}
+              port: {{ .Values.containerPort }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          {{- end }}
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-vpa
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: {{ .Release.Name }}-{{ .Chart.Name }}
+  updatePolicy:
+{{ toYaml .Values.vpa.updatePolicy | indent 4 }} 
+  resourcePolicy:
+{{ toYaml .Values.vpa.resourcePolicy | indent 4 }} 
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend\templates\service.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-service
+  labels:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.service.port }}
+      protocol: TCP
+      targetPort: {{ .Values.containerPort }}
+  selector:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend\values.yaml
+annotations:
+  path: /actuator/prometheus
+  port: "8080"
+  scrape: "true"
+env:
+  reportPath: "/logs/reports"
+  logPath: "/logs"
+service:
+  port: 8080
+revisionHistoryLimit: 15
+replicas: 1
+strategy: 
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+image:
+  repository: "" 
+  name: sausage-backend
+  tag: latest
+imagePullPolicy: Always
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "1"
+containerPort: 8080
+livenessProbe:
+  enabled: true
+  path: /actuator/health
+  initialDelaySeconds: 10
+  periodSeconds: 15
+readinessProbe:
+  enabled: true
+  path: /actuator/health
+  initialDelaySeconds: 5
+  periodSeconds: 10
+vpa:
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: backend
+      controlledResources: ["cpu", "memory"]
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend-report\Chart.yaml
+---
+apiVersion: v2
+type: application
+name: backend-report
+description: backend-report Helm Chart
+
+version: 0.1.0
+appVersion: "latest"
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend-report\templates\_helpers.tpl
+{{- define "backend-report.labels" -}}
+app.kubernetes.io/name: {{ .Chart.Name }}
+app.kubernetes.io/instance: "{{ .Release.Name }}"
+app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+app.kubernetes.io/component: {{ .Chart.Name }}
+app.kubernetes.io/part-of: {{ .Release.Name }}
+{{- end }}  
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend-report\templates\configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+data:
+  PORT: "{{ .Values.env.port }}"
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend-report\templates\deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "backend-report.labels" . | nindent 4 }}
+spec:
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  replicas: {{ .Values.replicas }}
+  strategy:
+{{ toYaml .Values.strategy | indent 4 }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-{{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-{{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository | default .Values.global.imageRegistry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+                  key: PORT
+            - name: DB
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
+                  key: DB
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.livenessProbe.path }}
+              port: {{ .Values.containerPort }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.path }}
+              port: {{ .Values.containerPort }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          {{- end }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend-report\templates\hpa.yaml
+{{- if .Values.hpa.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-{{ .Chart.Name }}
+  minReplicas: {{ .Values.hpa.minReplicas }}
+  maxReplicas: {{ .Values.hpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.hpa.targetCPUUtilizationPercentage }}
+{{- end }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend-report\templates\secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
+type: Opaque
+stringData:
+  DB: mongodb://{{ .Values.global.reportDbUser }}:{{ .Values.global.reportDbPassword }}@{{ .Release.Name }}-mongodb-service:{{ .Values.global.mongoPort }}/{{ .Values.global.reportDbName }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend-report\templates\service.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-service
+  labels:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.containerPort }}
+      protocol: TCP
+      targetPort: {{ .Values.containerPort }}
+  selector:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend-report\values.yaml
+image: YOUR_DOCKERHUB/sausage-backend-report:latest
+containerPort: 8080
+replicas: 1
+revisionHistoryLimit: 15
+strategy:
+  type: Recreate
+image:
+  repository: ""
+  name: sausage-backend-report
+  tag: latest
+env:
+  port: "8080"  
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "50m"
+  limits:
+    memory: "256Mi"
+    cpu: "200m"
+livenessProbe:
+  enabled: true
+  path: /api/v1/health
+  initialDelaySeconds: 10
+  periodSeconds: 15
+readinessProbe:
+  enabled: true
+  path: /api/v1/health
+  initialDelaySeconds: 5
+  periodSeconds: 10
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\frontend\Chart.yaml
+---
+apiVersion: v2
+type: application
+name: frontend
+description: frontend Helm Chart
+
+version: 0.1.0
+appVersion: "latest"
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\frontend\templates\_helpers.tpl
+{{- define "frontend.labels" -}}
+app.kubernetes.io/name: {{ .Chart.Name }}
+app.kubernetes.io/instance: "{{ .Release.Name }}"
+app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+app.kubernetes.io/managed-by: "{{ .Release.Service }}"
+helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+app.kubernetes.io/component: {{ .Chart.Name }}
+app.kubernetes.io/part-of: {{ .Release.Name }}
+{{- end }}  
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\frontend\templates\configmap.yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+data:
+  {{ .Values.nginxConf }}: |
+    user  nginx;
+    worker_processes  auto;
+    error_log  /var/log/nginx/error.log notice;
+    pid        /var/run/nginx.pid;
+    events {
+        worker_connections  1024;
+    }
+
+    http {
+        include       /etc/nginx/mime.types;
+        default_type  application/octet-stream;
+
+        log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                          '$status $body_bytes_sent "$http_referer" '
+                          '"$http_user_agent" "$http_x_forwarded_for"';
+
+        access_log  /var/log/nginx/access.log  main;
+
+        sendfile        on;
+        keepalive_timeout  65;
+        server {
+
+          listen       80;
+
+          location / {
+              root   /usr/share/nginx/html;
+              index  index.html;
+              try_files $uri $uri/ /index.html;
+          }
+
+            location /api {
+              proxy_pass http://{{ .Release.Name }}-backend-service:8080;
+          }
+
+          error_page   500 502 503 504  /50x.html;
+          location = /50x.html {
+              root   /usr/share/nginx/html;
+          }
+      }
+
+    }
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\frontend\templates\deployment.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "frontend.labels" . | nindent 4 }}
+spec:
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  replicas: {{ .Values.replicas }}
+  strategy:
+    type: {{ .Values.strategy.type }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-{{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-{{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository | default .Values.global.imageRegistry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          resources:
+{{ toYaml .Values.resources | indent 12 }} 
+          ports:
+            - name: {{ .Chart.Name }}
+              containerPort: {{ .Values.containerPort }}
+          volumeMounts:
+          - name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+            mountPath: /etc/nginx/{{ .Values.nginxConf }}
+            subPath: {{ .Values.nginxConf }}
+            readOnly: true
+    volumes:
+    - name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+      configMap:
+        name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+        items:
+          - key: {{ .Values.nginxConf }}
+            path: {{ .Values.nginxConf }} 
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\frontend\templates\ingress.yaml
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-ingress
+spec:
+  ingressClassName: "nginx"
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host }}
+      secretName: {{ .Values.ingress.tlsSecret }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+        - path: {{ .Values.ingress.path }}
+          pathType: {{ .Values.ingress.pathType }}
+          backend:
+            service:
+              name: {{ .Release.Name }}-{{ .Chart.Name }}-service
+              port:
+                number: {{ .Values.service.port }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\frontend\templates\service.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-service
+  labels:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.containerPort }}
+      protocol: TCP
+  selector:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\frontend\values.yaml
+replicas: 1
+revisionHistoryLimit: 15
+strategy:
+  type: Recreate
+service:
+  port: 80
+ingress:
+  host: front-nevskiy-va.students-projects.ru
+  path: /
+  pathType: Prefix
+  tlsSecret: 2sem-students-projects-wildcard-secret
+containerPort: 80
+image:
+  repository: "" 
+  name: sausage-frontend
+  tag: latest
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "128Mi"
+    cpu: "1"
+nginxConf: nginx.conf
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\Chart.yaml
+apiVersion: v2
+name: infra
+
+version: 0.1.0
+appVersion: "latest"
+
+dependencies:
+  - name: postgresql
+    version: 0.1.0
+  - name: mongodb
+    version: 0.1.0
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\charts\mongodb\Chart.yaml
+---
+apiVersion: v2
+type: application
+name: mongodb
+description: mongodb Helm Chart
+
+version: 0.1.0
+appVersion: "latest"
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\charts\mongodb\templates\_helpers.tpl
+{{- define "mongodb.labels" -}}
+app.kubernetes.io/name: {{ .Chart.Name }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+app.kubernetes.io/component: {{ .Chart.Name }}
+app.kubernetes.io/part-of: {{ .Release.Name }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+{{- end }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\charts\mongodb\templates\deployment.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+  annotations:
+    helm.sh/hook-weight: "-5"
+  labels:
+    {{- include "mongodb.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ .Release.Name }}-{{ .Chart.Name }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-{{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-{{ .Chart.Name }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: {{ .Values.image | default "mongo:7.0" }}
+        imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+        envFrom:
+        - secretKeyRef:
+            name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
+        ports:
+        - containerPort: {{ .Values.containerPort }}
+        resources:
+          requests:
+            memory: {{ .Values.resources.requests.memory | default "256Mi" }}
+            cpu: {{ .Values.resources.requests.cpu | default "100m" }}
+          limits:
+            memory: {{ .Values.resources.limits.memory | default "512Mi" }}
+        volumeMounts:
+        - name: mongodb-data
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: mongodb-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: {{.Values.storage }}
+      
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\charts\mongodb\templates\init.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-mongodb-init
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "5"
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: mongodb-init
+          image: mongo:7.0
+          command:
+            - /bin/sh
+            - -c
+            - |
+              mongosh --host {{ .Release.Name }}-mongodb-service \
+                      --username "$MONGO_INITDB_ROOT_USERNAME" \
+                      --password "$MONGO_INITDB_ROOT_PASSWORD" \
+                      --eval "
+                        db = db.getSiblingDB('${REPORT_DB}');
+                        db.createUser({
+                          user: '${REPORT_USER}',
+                          pwd: '${REPORT_PASSWORD}',
+                          roles: [ { role: 'readWrite', db: '${REPORT_DB}' } ]
+                        });
+                      "
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
+                  key: MONGO_INITDB_ROOT_USERNAME
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
+                  key: MONGO_INITDB_ROOT_PASSWORD
+            - name: REPORT_DB
+              value: {{ .Values.global.reportDbName }}
+            - name: REPORT_USER
+              value: {{ .Values.global.reportDbUser }}
+            - name: REPORT_PASSWORD
+              value: {{ .Values.global.reportDbPassword }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\charts\mongodb\templates\secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
+type: Opaque
+stringData:
+  MONGO_INITDB_ROOT_USERNAME: {{ .Values.global.mongoRootUser }}
+  MONGO_INITDB_ROOT_PASSWORD: {{ .Values.global.mongoRootPassword }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\charts\mongodb\templates\service.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-service
+  labels:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.global.mongoPort }}
+      targetPort: {{ .Values.containerPort }}
+      protocol: TCP
+  selector:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\charts\mongodb\templates\service-headless.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-service-headless
+  labels:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}-service-headless
+spec:
+  clusterIP: None
+  ports:
+    - port: {{ .Values.containerPort }}
+      protocol: TCP
+      targetPort: {{ .Values.containerPort }}
+  selector:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\charts\postgresql\Chart.yaml
+---
+apiVersion: v2
+type: application
+name: postgresql
+description: postgresql Helm Chart
+
+version: 0.1.0
+appVersion: "latest"
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\charts\postgresql\templates\_helpers.tpl
+{{- define "postgresql.labels" -}}
+app.kubernetes.io/name: {{ .Chart.Name }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/version: "{{ .Chart.AppVersion }}"
+app.kubernetes.io/component: {{ .Chart.Name }}
+app.kubernetes.io/part-of: {{ .Release.Name }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+{{- end }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\charts\postgresql\templates\deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+  labels:
+    {{- include "postgresql.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-{{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-{{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ .Values.image | default "postgres:13-alpine" }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.global.postgresDbName | default "sausage_store" }}
+          envFrom:
+            - secretRef:
+                name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory | default "256Mi" }}
+              cpu: {{ .Values.resources.requests.cpu | default "100m" }}
+            limits:
+              memory: {{ .Values.resources.limits.memory | default "512Mi" }}
+              cpu: {{ .Values.resources.limits.cpu | default "500m" }}
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - $(POSTGRES_USER)
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - $(POSTGRES_USER)
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-{{ .Chart.Name }}-pvc
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\charts\postgresql\templates\pvc.yaml
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-pvc
+  labels:
+    {{- include "postgresql.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.storage | default "2Gi" }}
+  {{- with .Values.storageClassName }}
+  storageClassName: {{ . }}
+  {{- end }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\charts\postgresql\templates\secret.yaml
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
+  labels:
+    {{- include "postgresql.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  POSTGRES_USER: {{ .Values.global.postgresUser }}
+  POSTGRES_PASSWORD: {{ .Values.global.postgresPassword }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\charts\postgresql\templates\service.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-service
+  labels:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.global.postgresPort }}
+      targetPort: {{ .Values.containerPort }}
+      protocol: TCP
+  selector:
+    app: {{ .Release.Name }}-{{ .Chart.Name }}
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\values.yaml
+postgresql:
+  storage: 2Gi
+  storageClassName: "standard"
+  image: postgres:13-alpine
+  containerPort: 5432
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+      
+mongodb:
+  storage: 1Gi
+  containerPort: 27017
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+
+# C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\values.yaml
+global:
+  imageRegistry: "myregistry.example.com" 
+  imagePullPolicy: Always
+
+  postgresDbName: "sausage_store"
+  postgresUser: "store"
+  postgresPassword: "storepassword"
+  postgresPort: "5432"
+
+  mongoRootUser: "root"
+  mongoRootPassword: "rootpassword"
+  mongoPort: "27017"
+
+  reportDbName: "reports"
+  reportDbUser: "report_user"
+  reportDbPassword: "report_pass"
+  ###vault:
+  ###  host: ip
+  ###  name: vault
+  ###  vaultToken: someToken
+
+
+backend:
+  image:
+    repository: ""
+    name: sausage-backend
+    tag: latest
+
+backend-report:
+  image:
+    name: sausage-backend-report
+    tag: latest
+
+frontend:
+  image:
+    name: sausage-frontend
+    tag: latest
+
+infra:
+  postgresql:
+    storage: 2Gi
+    storageClassName: "standard"
+  mongodb:
+    storage: 1Gi
+
