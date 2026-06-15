@@ -17,7 +17,7 @@ spec:
   template:
     metadata:
       annotations:
-        prometheus.io/path: {{ .Values.annotations.path }}
+        prometheus.io/path: {{ .Values.annotations.path }}  
         prometheus.io/port: "{{ .Values.annotations.port }}"
         prometheus.io/scrape: "{{ .Values.annotations.scrape }}"
       labels:
@@ -28,28 +28,7 @@ spec:
           image:  "{{ .Values.image.repository | default .Values.global.imageRegistry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           env:
-            - name: SPRING_DATASOURCE_URL
-              value: "jdbc:postgresql://{{ .Release.Name }}-postgresql-service:{{ .Values.global.postgresPort }}/{{ .Values.global.postgresDbName }}"
-            - name: SPRING_DATASOURCE_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-postgresql-secret
-                  key: POSTGRES_USER
-            - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-postgresql-secret
-                  key: POSTGRES_PASSWORD
-            - name: REPORT_PATH
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
-                  key: report_path
-            - name: LOG_PATH
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
-                  key: log_path
+            {{- include "backend.env" . | nindent 6 }}
           resources:
 {{ toYaml .Values.resources | indent 12 }} 
           ports:
@@ -71,17 +50,3 @@ spec:
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
           {{- end }}
----
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata:
-  name: {{ .Release.Name }}-{{ .Chart.Name }}-vpa
-spec:
-  targetRef:
-    apiVersion: "apps/v1"
-    kind: Deployment
-    name: {{ .Release.Name }}-{{ .Chart.Name }}
-  updatePolicy:
-{{ toYaml .Values.vpa.updatePolicy | indent 4 }} 
-  resourcePolicy:
-{{ toYaml .Values.vpa.resourcePolicy | indent 4 }} 

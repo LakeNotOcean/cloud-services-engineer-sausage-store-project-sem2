@@ -15,6 +15,7 @@ global:
   reportDbUser: "report_user"
   reportDbPassword: "report_pass"
   ###vault:
+  ###  enabled:false
   ###  host: ip
   ###  name: vault
   ###  vaultToken: someToken

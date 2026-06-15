@@ -3,10 +3,10 @@ set -euo pipefail
 
 # ---------- Параметры ----------
 usage() {
-    echo "Использование: $0 -u DOCKER_USER -v VERSION [-p PASSWORD] [-h]"
+    echo "Использование: $0 -u DOCKER_USER -v VERSION -p PASSWORD [-h]"
     echo "  -u DOCKER_USER   Имя пользователя Docker Hub"
-    echo "  -v VERSION       Версия для тега (и build-arg для backend)"
-    echo "  -p PASSWORD      Пароль Docker Hub (если не выполнен docker login)"
+    echo "  -v VERSION       Версия для тега"
+    echo "  -p PASSWORD      Пароль Docker Hub"
     exit 1
 }
 
@@ -39,7 +39,9 @@ build_and_push() {
     echo "========================================="
     echo "Сборка образа: $IMAGE_NAME:$VERSION"
     echo "Контекст: $CONTEXT_DIR"
-    echo "Дополнительные аргументы: ${BUILD_ARGS[*]:-нет}"
+    echo "Дополнительные аргументы: ${BUILD_ARGS[*]:-нет}"\
+
+    CONTEXT_DIR="../${CONTEXT_DIR}"
 
     docker build \
         "${BUILD_ARGS[@]}" \
@@ -59,10 +61,12 @@ build_and_push \
 
 build_and_push \
     "$DOCKER_USER/sausage-frontend" \
-    "frontend"
+    "frontend" \
+    --build-arg "VERSION=$VERSION"
 
 build_and_push \
     "$DOCKER_USER/sausage-backend-report" \
-    "backend-report"
+    "backend-report" \
+    --build-arg "VERSION=$VERSION"
 
 echo "Образы опубликованы!"

@@ -28,6 +28,17 @@ description: backend Helm Chart
 version: 0.1.0
 appVersion: "latest"
 
+dependencies:
+  - name: infra
+    version: 0.1.0
+  - name: backend
+    version: 0.1.0
+  - name: backend-report
+    version: 0.1.0
+  - name: frontend
+    version: 0.1.0
+  
+
 # C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend\templates\_helpers.tpl
 {{- define "backend.labels" -}}
 app.kubernetes.io/name: {{ .Chart.Name }}
@@ -155,15 +166,23 @@ spec:
     app: {{ .Release.Name }}-{{ .Chart.Name }}
 
 # C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend\values.yaml
+# Р°РЅРЅРѕС‚Р°С†РёРё Pormetheus
 annotations:
   path: /actuator/prometheus
   port: "8080"
   scrape: "true"
+
+# РїСѓС‚Рё Р°СЂС‚РµС„Р°РєС‚РѕРІ
 env:
   reportPath: "/logs/reports"
   logPath: "/logs"
+
+# РїРѕСЂС‚С‹ РєРѕРЅС‚РµР№РЅРµСЂР°
 service:
   port: 8080
+containerPort: 8080
+
+# СЃС‚СЂР°С‚РµРіРёСЏ СЂРµРїР»РёРєР°С†РёРё
 revisionHistoryLimit: 15
 replicas: 1
 strategy: 
@@ -171,11 +190,15 @@ strategy:
     rollingUpdate:
       maxUnavailable: 1
       maxSurge: 1
+
+# РґР°РЅРЅС‹Рµ РѕР±СЂР°Р·Р°
 image:
-  repository: "" 
+  repository: "lakenotocean" 
   name: sausage-backend
   tag: latest
 imagePullPolicy: Always
+
+# Р·Р°РїСЂРѕСЃ СЂРµСЃСѓСЂСЃРѕРІ
 resources:
   requests:
     memory: "256Mi"
@@ -183,7 +206,8 @@ resources:
   limits:
     memory: "512Mi"
     cpu: "1"
-containerPort: 8080
+
+# РїСЂРѕРІРµСЂРєР°
 livenessProbe:
   enabled: true
   path: /actuator/health
@@ -194,6 +218,8 @@ readinessProbe:
   path: /actuator/health
   initialDelaySeconds: 5
   periodSeconds: 10
+
+# vpa 
 vpa:
   updatePolicy:
     updateMode: "Off"
@@ -337,18 +363,24 @@ spec:
     app: {{ .Release.Name }}-{{ .Chart.Name }}
 
 # C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend-report\values.yaml
-image: YOUR_DOCKERHUB/sausage-backend-report:latest
+# РїРѕСЂС‚С‹ РєРѕРЅС‚РµР№РЅРµСЂР°
+env:
+  port: "8080"  
 containerPort: 8080
+
+# СЃС‚СЂР°С‚РµРіРёРё СЂРµРїР»РёРєР°С†РёРё
 replicas: 1
 revisionHistoryLimit: 15
 strategy:
   type: Recreate
+
+# РґР°РЅРЅС‹Рµ РѕР±СЂР°Р·Р°
 image:
-  repository: ""
+  repository: "lakenotocean"
   name: sausage-backend-report
   tag: latest
-env:
-  port: "8080"  
+
+# Р·Р°РїСЂРѕСЃ СЂРµСЃСѓСЂСЃРѕРІ
 resources:
   requests:
     memory: "128Mi"
@@ -356,6 +388,8 @@ resources:
   limits:
     memory: "256Mi"
     cpu: "200m"
+
+# РїСЂРѕРІРµСЂРєР°
 livenessProbe:
   enabled: true
   path: /api/v1/health
@@ -366,6 +400,8 @@ readinessProbe:
   path: /api/v1/health
   initialDelaySeconds: 5
   periodSeconds: 10
+
+# hpa
 hpa:
   enabled: true
   minReplicas: 1
@@ -529,22 +565,31 @@ spec:
     app: {{ .Release.Name }}-{{ .Chart.Name }}
 
 # C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\frontend\values.yaml
+# РїРѕСЂС‚С‹ РєРѕРЅС‚РµР№РЅРµСЂР°
+service:
+  port: 80
+containerPort: 80
+
+# СЃС‚СЂР°С‚РµРіРёРё СЂРµРїР»РёРєР°С†РёРё
 replicas: 1
 revisionHistoryLimit: 15
 strategy:
   type: Recreate
-service:
-  port: 80
+
+# РґР°РЅРЅС‹Рµ РѕР±СЂР°Р·Р°
+image:
+  repository: "lakenotocean" 
+  name: sausage-frontend
+  tag: latest
+
+# СЃРµС‚СЊ
 ingress:
   host: front-nevskiy-va.students-projects.ru
   path: /
   pathType: Prefix
   tlsSecret: 2sem-students-projects-wildcard-secret
-containerPort: 80
-image:
-  repository: "" 
-  name: sausage-frontend
-  tag: latest
+
+# Р·Р°РїСЂРѕСЃ СЂРµСЃСѓСЂСЃРѕРІ
 resources:
   requests:
     memory: "128Mi"
@@ -715,9 +760,9 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}-{{ .Chart.Name }}-service-headless
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
   labels:
-    app: {{ .Release.Name }}-{{ .Chart.Name }}-service-headless
+    app: {{ .Release.Name }}-{{ .Chart.Name }}
 spec:
   clusterIP: None
   ports:
@@ -882,7 +927,7 @@ mongodb:
 
 # C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\values.yaml
 global:
-  imageRegistry: "myregistry.example.com" 
+  imageRegistry: "lakenotocean" 
   imagePullPolicy: Always
 
   postgresDbName: "sausage_store"
@@ -911,11 +956,13 @@ backend:
 
 backend-report:
   image:
+    repository: ""
     name: sausage-backend-report
     tag: latest
 
 frontend:
   image:
+    repository: ""
     name: sausage-frontend
     tag: latest
 

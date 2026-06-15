@@ -1,3 +1,5 @@
+ARG VERSION=${VERSION}
+
 # установка зависимостей с помощью npm
 FROM node:26-alpine AS base
 
