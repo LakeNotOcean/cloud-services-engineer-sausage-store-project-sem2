@@ -112,5 +112,4 @@ jobs:
           helm upgrade --install sausage-store nexus/sausage-store \
             --namespace "${SAUSAGE_STORE_NAMESPACE}" \
             --create-namespace \
-            --version 0.1.0 \
             --wait
