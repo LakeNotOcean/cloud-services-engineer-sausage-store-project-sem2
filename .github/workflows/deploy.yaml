@@ -88,7 +88,7 @@ jobs:
           --username ${NEXUS_HELM_REPO_USER} \
           --password ${NEXUS_HELM_REPO_PASSWORD}  
           helm repo update 
-          helm push ./sausage-store-chart nexus
+          helm cm-push ./sausage-store-chart nexus
   # Деплоим приложения в кластер Kubernetes с помощью helm-чарт
   deploy_helm_chart_to_kubernetes:
       name: Deploy Helm Chart To Kubernetes
