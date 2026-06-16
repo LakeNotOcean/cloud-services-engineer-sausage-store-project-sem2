@@ -21,6 +21,8 @@ spec:
           env:
             - name: POSTGRES_DB
               value: {{ .Values.global.postgresDbName | default "sausage_store" }}
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           envFrom:
             - secretRef:
                 name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
@@ -39,17 +41,17 @@ spec:
           livenessProbe:
             exec:
               command:
-                - pg_isready
-                - -U
-                - $(POSTGRES_USER)
+                - /bin/sh
+                - -c
+                - pg_isready -U $POSTGRES_USER
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             exec:
               command:
-                - pg_isready
-                - -U
-                - $(POSTGRES_USER)
+                - /bin/sh
+                - -c
+                - pg_isready -U $POSTGRES_USER
             initialDelaySeconds: 5
             periodSeconds: 5
       volumes:

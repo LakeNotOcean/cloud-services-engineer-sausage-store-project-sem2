@@ -6,4 +6,16 @@ app.kubernetes.io/managed-by: "{{ .Release.Service }}"
 helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
 app.kubernetes.io/component: {{ .Chart.Name }}
 app.kubernetes.io/part-of: {{ .Release.Name }}
-{{- end }}  
+{{- end }} 
+{{- define "backend-report.env" -}} 
+- name: PORT
+  valueFrom:
+    configMapKeyRef:
+      name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+      key: PORT
+- name: DB
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Release.Name }}-mongodb-secret
+      key: REPORT_DB_CONNECTION_STRING
+{{- end }} 

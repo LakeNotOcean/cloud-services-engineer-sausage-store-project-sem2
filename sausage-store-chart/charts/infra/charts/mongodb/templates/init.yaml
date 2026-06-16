@@ -3,44 +3,80 @@ kind: Job
 metadata:
   name: {{ .Release.Name }}-mongodb-init
   annotations:
-    "helm.sh/hook": post-install
+    "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation
 spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 300   # Автоочистка через 5 минут после завершения
   template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-mongodb-init
     spec:
-      restartPolicy: Never
-      containers:
-        - name: mongodb-init
-          image: mongo:7.0
+      restartPolicy: OnFailure
+      initContainers:
+        - name: waiting
+          image: busybox:1.36
           command:
-            - /bin/sh
+            - sh
             - -c
             - |
-              mongosh --host {{ .Release.Name }}-mongodb-service \
-                      --username "$MONGO_INITDB_ROOT_USERNAME" \
-                      --password "$MONGO_INITDB_ROOT_PASSWORD" \
-                      --eval "
-                        db = db.getSiblingDB('${REPORT_DB}');
-                        db.createUser({
-                          user: '${REPORT_USER}',
-                          pwd: '${REPORT_PASSWORD}',
-                          roles: [ { role: 'readWrite', db: '${REPORT_DB}' } ]
-                        });
-                      "
+              until nc -z {{ .Release.Name }}-mongodb-service {{ .Values.global.mongoPort }}; do
+                echo "Waiting for MongoDB..."
+                sleep 3
+              done
+          resources:
+            requests:
+              memory: "16Mi"
+              cpu: "10m"
+            limits:
+              memory: "32Mi"
+              cpu: "50m"
+      containers:
+        - name: mongodb-init
+          image: "mongo:7.0" 
+          command:
+            - mongosh
+          args:
+            - --host
+            - {{ .Release.Name }}-mongodb-service
+            - --port
+            - "{{ .Values.global.mongoPort }}"
+            - --username
+            - "$(MONGO_INITDB_ROOT_USERNAME)"
+            - --password
+            - "$(MONGO_INITDB_ROOT_PASSWORD)"
+            - --authenticationDatabase
+            - admin
+            - --eval
+            - |
+              db = db.getSiblingDB('{{ .Values.global.reportDbName }}');
+              if (!db.getUser('{{ .Values.global.reportDbUser }}')) {
+                db.createUser({
+                  user: '{{ .Values.global.reportDbUser }}',
+                  pwd: '{{ .Values.global.reportDbPassword }}',
+                  roles: [{ role: 'readWrite', db: '{{ .Values.global.reportDbName }}' }]
+                });
+                print('User {{ .Values.global.reportDbUser }} created successfully.');
+              } else {
+                print('User {{ .Values.global.reportDbUser }} already exists, skipping.');
+              }
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
+                  name: {{ .Release.Name }}-mongodb-secret
                   key: MONGO_INITDB_ROOT_USERNAME
             - name: MONGO_INITDB_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
+                  name: {{ .Release.Name }}-mongodb-secret
                   key: MONGO_INITDB_ROOT_PASSWORD
-            - name: REPORT_DB
-              value: {{ .Values.global.reportDbName }}
-            - name: REPORT_USER
-              value: {{ .Values.global.reportDbUser }}
-            - name: REPORT_PASSWORD
-              value: {{ .Values.global.reportDbPassword }}
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"

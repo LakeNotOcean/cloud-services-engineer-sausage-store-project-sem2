@@ -7,18 +7,22 @@ INSERT INTO public.product (id, name, picture_url, price) VALUES
 (5, 'Мюнхенская', 'https://res.cloudinary.com/sugrobov/image/upload/v1623323635/repos/sausages/2.jpg', 330.00),
 (6, 'Русская', 'https://res.cloudinary.com/sugrobov/image/upload/v1623323635/repos/sausages/1.jpg', 189.00);
 
--- генерация 10_000_000 заказов со случайным статусом и датой за последние 90 дней
+-- генерация 10_000 заказов со случайным статусом и датой за последние 90 дней
 INSERT INTO public.orders 
     (id, status, date_created)
 SELECT i,
     (ARRAY['pending', 'shipped', 'cancelled'])[floor(random() * 3 + 1)],
     CURRENT_DATE - (random() * 90)::int
-FROM generate_series(1, 10000000) s(i);
+FROM generate_series(1, 10000) s(i);
 
--- генерация 10_000_000 записей в order_product (один продукт для каждого из заказов)
+-- генерация 10_000 записей в order_product (один продукт для каждого из заказов)
 INSERT INTO public.order_product 
     (quantity, order_id, product_id)
 SELECT floor(1 + random() * 50)::int,
     i,
     1 + floor(random() * 6)::int
-FROM generate_series(1, 10000000) s(i);
+FROM generate_series(1, 10000) s(i);
+
+
+SELECT setval('orders_id_seq', (SELECT max(id) FROM orders));
+SELECT setval('product_id_seq', (SELECT max(id) FROM product));

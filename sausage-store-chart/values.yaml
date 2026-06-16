@@ -2,7 +2,7 @@ global:
   imageRegistry: "lakenotocean" 
   imagePullPolicy: Always
 
-  postgresDbName: "sausage_store"
+  postgresDbName: "store"
   postgresUser: "store"
   postgresPassword: "storepassword"
   postgresPort: "5432"
@@ -11,7 +11,7 @@ global:
   mongoRootPassword: "rootpassword"
   mongoPort: "27017"
 
-  reportDbName: "reports"
+  reportDbName: "sausage-store"
   reportDbUser: "report_user"
   reportDbPassword: "report_pass"
   ###vault:
@@ -42,6 +42,7 @@ frontend:
 infra:
   postgresql:
     storage: 2Gi
-    storageClassName: "standard"
+    storageClassName: "yc-network-hdd"
   mongodb:
     storage: 1Gi
+    storageClassName: "yc-network-hdd"

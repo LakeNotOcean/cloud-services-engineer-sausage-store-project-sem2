@@ -33,10 +33,10 @@ spec:
             mountPath: /etc/nginx/{{ .Values.nginxConf }}
             subPath: {{ .Values.nginxConf }}
             readOnly: true
-    volumes:
-    - name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
-      configMap:
-        name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
-        items:
-          - key: {{ .Values.nginxConf }}
-            path: {{ .Values.nginxConf }} 
+      volumes:
+      - name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+        configMap:
+          name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
+          items:
+            - key: {{ .Values.nginxConf }}
+              path: {{ .Values.nginxConf }} 

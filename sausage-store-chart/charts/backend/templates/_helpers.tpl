@@ -8,6 +8,11 @@ app.kubernetes.io/component: {{ .Chart.Name }}
 app.kubernetes.io/part-of: {{ .Release.Name }}
 {{- end }} 
 {{- define "backend.env" -}}
+- name: SPRING_DATA_MONGODB_URI
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Release.Name }}-mongodb-secret
+      key: REPORT_DB_CONNECTION_STRING
 - name: SPRING_DATASOURCE_URL
   value: "jdbc:postgresql://{{ .Release.Name }}-postgresql-service:{{ .Values.global.postgresPort }}/{{ .Values.global.postgresDbName }}"
 - name: SPRING_DATASOURCE_USERNAME
