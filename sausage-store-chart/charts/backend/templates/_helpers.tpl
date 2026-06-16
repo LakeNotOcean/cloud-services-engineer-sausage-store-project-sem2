@@ -36,3 +36,24 @@ app.kubernetes.io/part-of: {{ .Release.Name }}
       name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
       key: log_path
 {{- end }}
+{{- define "backend.wait-for-mongo" -}}
+- name: wait-for-mongo
+  image: mongo:7.0
+  command:
+    - mongosh
+  args:
+    - --host
+    - {{ .Release.Name }}-mongodb-service
+    - --port
+    - "{{ .Values.global.mongoPort }}"
+    - --username
+    - "{{ .Values.global.reportDbUser }}"
+    - --password
+    - "{{ .Values.global.reportDbPassword }}"
+    - --authenticationDatabase
+    - "{{ .Values.global.reportDbName }}"
+    - --eval
+    - "db.runCommand({ping: 1})"
+  resources:
+    {{- toYaml .Values.global.initContainers.mongo.resources | nindent 4 }}
+{{- end }}

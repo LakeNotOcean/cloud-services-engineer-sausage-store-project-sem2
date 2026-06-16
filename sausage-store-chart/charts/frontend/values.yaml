@@ -17,7 +17,7 @@ image:
 
 # сеть
 ingress:
-  host: front-ch3shirskins.students-projects.ru
+  host: front-s18727602.students-projects.ru
   path: /
   pathType: Prefix
   tlsSecret: 2sem-students-projects-wildcard-secret

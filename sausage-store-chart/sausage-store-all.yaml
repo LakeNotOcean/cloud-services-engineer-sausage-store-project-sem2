@@ -109,30 +109,30 @@ spec:
         app: {{ .Release.Name }}-{{ .Chart.Name }}
     spec:
       initContainers:
-      - name: wait-for-mongo
-        image: mongo:7.0
-        command:
-          - mongosh
-        args:
-          - --host
-          - {{ .Release.Name }}-mongodb-service
-          - --port
-          - "{{ .Values.global.mongoPort }}"
-          - --username
-          - "{{ .Values.global.reportDbUser }}"
-          - --password
-          - "{{ .Values.global.reportDbPassword }}"
-          - --authenticationDatabase
-          - "{{ .Values.global.reportDbName }}"
-          - --eval
-          - "db.runCommand({ping: 1})"
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "50m"
-          limits:
-            memory: "256Mi"
-            cpu: "100m"
+        - name: wait-for-mongo
+          image: mongo:7.0
+          command:
+            - mongosh
+          args:
+            - --host
+            - {{ .Release.Name }}-mongodb-service
+            - --port
+            - "{{ .Values.global.mongoPort }}"
+            - --username
+            - "{{ .Values.global.reportDbUser }}"
+            - --password
+            - "{{ .Values.global.reportDbPassword }}"
+            - --authenticationDatabase
+            - "{{ .Values.global.reportDbName }}"
+            - --eval
+            - "db.runCommand({ping: 1})"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "100m"
       containers:
         - name: {{ .Chart.Name }}
           image:  "{{ .Values.image.repository | default .Values.global.imageRegistry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
@@ -825,10 +825,10 @@ spec:
                   key: MONGO_INITDB_ROOT_PASSWORD
           resources:
             requests:
-              memory: "64Mi"
+              memory: "128Mi"
               cpu: "100m"
             limits:
-              memory: "128Mi"
+              memory: "256Mi"
               cpu: "200m"
 
 # C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\infra\charts\mongodb\templates\secret.yaml
