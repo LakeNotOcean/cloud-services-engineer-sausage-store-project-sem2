@@ -110,5 +110,4 @@ jobs:
       - name: Deploy app
         run: |
           helm upgrade --install sausage-store nexus/sausage-store \
-            --namespace "${SAUSAGE_STORE_NAMESPACE}" \
-            --wait
+            --namespace "${SAUSAGE_STORE_NAMESPACE}" 
