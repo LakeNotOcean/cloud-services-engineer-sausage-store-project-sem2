@@ -72,6 +72,27 @@ app.kubernetes.io/part-of: {{ .Release.Name }}
       name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
       key: log_path
 {{- end }}
+{{- define "backend.wait-for-mongo" -}}
+- name: wait-for-mongo
+  image: mongo:7.0
+  command:
+    - mongosh
+  args:
+    - --host
+    - {{ .Release.Name }}-mongodb-service
+    - --port
+    - "{{ .Values.global.mongoPort }}"
+    - --username
+    - "{{ .Values.global.reportDbUser }}"
+    - --password
+    - "{{ .Values.global.reportDbPassword }}"
+    - --authenticationDatabase
+    - "{{ .Values.global.reportDbName }}"
+    - --eval
+    - "db.runCommand({ping: 1})"
+  resources:
+    {{- toYaml .Values.global.initContainers.mongo.resources | nindent 4 }}
+{{- end }}
 
 # C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend\templates\configmap.yaml
 apiVersion: v1
@@ -109,30 +130,7 @@ spec:
         app: {{ .Release.Name }}-{{ .Chart.Name }}
     spec:
       initContainers:
-        - name: wait-for-mongo
-          image: mongo:7.0
-          command:
-            - mongosh
-          args:
-            - --host
-            - {{ .Release.Name }}-mongodb-service
-            - --port
-            - "{{ .Values.global.mongoPort }}"
-            - --username
-            - "{{ .Values.global.reportDbUser }}"
-            - --password
-            - "{{ .Values.global.reportDbPassword }}"
-            - --authenticationDatabase
-            - "{{ .Values.global.reportDbName }}"
-            - --eval
-            - "db.runCommand({ping: 1})"
-          resources:
-            requests:
-              memory: "128Mi"
-              cpu: "50m"
-            limits:
-              memory: "256Mi"
-              cpu: "100m"
+        {{- include "backend.wait-for-mongo" . | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
           image:  "{{ .Values.image.repository | default .Values.global.imageRegistry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
@@ -293,6 +291,27 @@ app.kubernetes.io/part-of: {{ .Release.Name }}
       name: {{ .Release.Name }}-mongodb-secret
       key: REPORT_DB_CONNECTION_STRING
 {{- end }} 
+{{- define "backend-report.wait-for-mongo" -}}
+- name: wait-for-mongo
+  image: mongo:7.0
+  command:
+    - mongosh
+  args:
+    - --host
+    - {{ .Release.Name }}-mongodb-service
+    - --port
+    - "{{ .Values.global.mongoPort }}"
+    - --username
+    - "{{ .Values.global.reportDbUser }}"
+    - --password
+    - "{{ .Values.global.reportDbPassword }}"
+    - --authenticationDatabase
+    - "{{ .Values.global.reportDbName }}"
+    - --eval
+    - "db.runCommand({ping: 1})"
+  resources:
+    {{- toYaml .Values.global.initContainers.mongo.resources | nindent 4 }}
+{{- end }}
 
 # C:\Projects\yandex\cloud-services-engineer-sausage-store-project-sem2\sausage-store-chart\charts\backend-report\templates\configmap.yaml
 apiVersion: v1
@@ -324,30 +343,7 @@ spec:
         app: {{ .Release.Name }}-{{ .Chart.Name }}
     spec:
       initContainers:
-        - name: wait-for-mongo
-          image: mongo:7.0
-          command:
-            - mongosh
-          args:
-            - --host
-            - {{ .Release.Name }}-mongodb-service
-            - --port
-            - "{{ .Values.global.mongoPort }}"
-            - --username
-            - "{{ .Values.global.reportDbUser }}"
-            - --password
-            - "{{ .Values.global.reportDbPassword }}"
-            - --authenticationDatabase
-            - "{{ .Values.global.reportDbName }}"
-            - --eval
-            - "db.runCommand({ping: 1})"
-          resources:
-            requests:
-              memory: "128Mi"
-              cpu: "50m"
-            limits:
-              memory: "256Mi"
-              cpu: "100m"
+        {{- include "backend-report.wait-for-mongo" . | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository | default .Values.global.imageRegistry }}/{{ .Values.image.name }}:{{ .Values.image.tag }}"
@@ -644,7 +640,7 @@ image:
 
 # СЃРµС‚СЊ
 ingress:
-  host: front-ch3shirskins.students-projects.ru
+  host: front-nevskiy-va.students-projects.ru
   path: /
   pathType: Prefix
   tlsSecret: 2sem-students-projects-wildcard-secret
@@ -1032,6 +1028,16 @@ global:
   reportDbName: "sausage-store"
   reportDbUser: "report_user"
   reportDbPassword: "report_pass"
+
+  initContainers:
+    mongo:
+      resources:
+        requests:
+          memory: "128Mi"
+          cpu: "50m"
+        limits:
+          memory: "256Mi"
+          cpu: "100m"
   ###vault:
   ###  enabled:false
   ###  host: ip
