@@ -84,9 +84,9 @@ jobs:
         run: |
           CHART=$(ls sausage-store-*.tgz | head -1)
           curl --fail \
-            -u "${NEXUS_HELM_REPO_USER}:${NEXUS_HELM_REPO_PASSWORD}" \ 
+            -u "${NEXUS_HELM_REPO_USER}:${NEXUS_HELM_REPO_PASSWORD}" \
             --upload-file "${CHART}" \
-            ${NEXUS_HELM_REPO}/
+            "${NEXUS_HELM_REPO}/"
   # Деплоим приложения в кластер Kubernetes с помощью helm-чарт
   deploy_helm_chart_to_kubernetes:
       name: Deploy Helm Chart To Kubernetes
