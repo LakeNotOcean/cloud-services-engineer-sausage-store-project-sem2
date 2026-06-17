@@ -17,7 +17,7 @@ image:
 
 # сеть
 ingress:
-  host: front-s18727602.students-projects.ru
+  host: front-nevskiy-va.students-projects.ru
   path: /
   pathType: Prefix
   tlsSecret: 2sem-students-projects-wildcard-secret
