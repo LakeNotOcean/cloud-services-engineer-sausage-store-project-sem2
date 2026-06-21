@@ -112,8 +112,8 @@ jobs:
       - name: Fetch secrets from Vault via API
         id: vault
         run: |
-          SECRETS=$(curl -sS --fail \
-            -H "X-Vault-Token: ${{ env.VAULT_TOKEN }}" \
+          SECRETS=$(curl -s \
+            --header "X-Vault-Token: ${{ env.VAULT_TOKEN }}" \
             "${{ env.VAULT_HOST }}:8201/v1/secret/data/sausage-store" | jq -r '.data.data')
 
           POSTGRES_USER=$(echo "$SECRETS" | jq -r '.postgresUser')
