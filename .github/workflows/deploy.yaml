@@ -112,7 +112,7 @@ jobs:
       - name: Fetch secrets from Vault via API
         id: vault
         run: |
-          SECRETS=$(curl -s \
+          SECRETS=$(curl -s --fail \
             --header "X-Vault-Token: ${VAULT_TOKEN}" \
             "${VAULT_HOST}:8201/v1/secret/data/sausage-store" | jq -r '.data.data')
 
@@ -138,7 +138,7 @@ jobs:
         run: |
           helm upgrade --install sausage-store nexus/sausage-store \
             --namespace "${SAUSAGE_STORE_NAMESPACE}" \
-            --set global.vault.vaultToken="${{ secrets.VAULT_TOKEN }}" \
+            --set global.vault.vaultToken="${VAULT_TOKEN}" \
             --set global.postgresUser="${{ steps.vault.outputs.postgres_user }}" \
             --set global.postgresPassword="${{ steps.vault.outputs.postgres_password }}" \
             --set global.mongoRootUser="${{ steps.vault.outputs.mongo_user }}" \
