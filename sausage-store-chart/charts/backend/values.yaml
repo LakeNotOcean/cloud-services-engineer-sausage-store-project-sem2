@@ -1,3 +1,13 @@
+# vault
+vault:
+  enabled: true
+  host: "93.77.183.14"
+  port: 8201
+  scheme: http
+  name: vault
+  vaultToken: someToken
+
+
 # аннотации Pormetheus
 annotations:
   path: /actuator/prometheus

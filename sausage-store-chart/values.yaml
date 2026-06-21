@@ -14,7 +14,6 @@ global:
   reportDbName: "sausage-store"
   reportDbUser: "report_user"
   reportDbPassword: "report_pass"
-
   initContainers:
     mongo:
       resources:
@@ -24,11 +23,13 @@ global:
         limits:
           memory: "256Mi"
           cpu: "100m"
-  ###vault:
-  ###  enabled:false
-  ###  host: ip
-  ###  name: vault
-  ###  vaultToken: someToken
+  vault:
+    enabled: true
+    host: "93.77.183.14"
+    port: 8201
+    scheme: http
+    name: vault
+    vaultToken: someToken
 
 
 backend:

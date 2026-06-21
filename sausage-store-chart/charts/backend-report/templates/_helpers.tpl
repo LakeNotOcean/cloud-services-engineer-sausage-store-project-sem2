@@ -7,6 +7,7 @@ helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
 app.kubernetes.io/component: {{ .Chart.Name }}
 app.kubernetes.io/part-of: {{ .Release.Name }}
 {{- end }} 
+
 {{- define "backend-report.env" -}} 
 - name: PORT
   valueFrom:
@@ -19,6 +20,7 @@ app.kubernetes.io/part-of: {{ .Release.Name }}
       name: {{ .Release.Name }}-mongodb-secret
       key: REPORT_DB_CONNECTION_STRING
 {{- end }} 
+
 {{- define "backend-report.wait-for-mongo" -}}
 - name: wait-for-mongo
   image: mongo:7.0

@@ -8,6 +8,8 @@ version: 0.1.0
 appVersion: "latest"
 
 dependencies:
+  - name: vault
+    version: 0.1.0
   - name: backend
     version: 0.1.0
   - name: backend-report

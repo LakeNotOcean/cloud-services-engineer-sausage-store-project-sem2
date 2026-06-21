@@ -7,35 +7,41 @@ helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
 app.kubernetes.io/component: {{ .Chart.Name }}
 app.kubernetes.io/part-of: {{ .Release.Name }}
 {{- end }} 
+
 {{- define "backend.env" -}}
-- name: SPRING_DATA_MONGODB_URI
-  valueFrom:
-    secretKeyRef:
-      name: {{ .Release.Name }}-mongodb-secret
-      key: REPORT_DB_CONNECTION_STRING
+- name: SPRING_CLOUD_VAULT_ENABLED
+  value: "{{ .Values.global.vault.enabled }}"
+- name: SPRING_CLOUD_VAULT_HOST
+  value: "{{ .Values.global.vault.host }}"
+- name: SPRING_CLOUD_VAULT_PORT
+  value: "{{ .Values.global.vault.port }}"
+- name: SPRING_CLOUD_VAULT_SCHEME
+  value: "{{ .Values.global.vault.scheme }}"
+- name: SPRING_DATA_MONGODB_HOST
+  value: {{ .Release.Name }}-mongodb-service
+- name: SPRING_DATA_MONGODB_PORT
+  value: "{{ .Values.global.mongoPort }}"
+- name: SPRING_DATA_MONGODB_DATABASE
+  value: "{{ .Values.global.reportDbName }}"
 - name: SPRING_DATASOURCE_URL
   value: "jdbc:postgresql://{{ .Release.Name }}-postgresql-service:{{ .Values.global.postgresPort }}/{{ .Values.global.postgresDbName }}"
-- name: SPRING_DATASOURCE_USERNAME
-  valueFrom:
-    secretKeyRef:
-      name: {{ .Release.Name }}-postgresql-secret
-      key: POSTGRES_USER
-- name: SPRING_DATASOURCE_PASSWORD
-  valueFrom:
-    secretKeyRef:
-      name: {{ .Release.Name }}-postgresql-secret
-      key: POSTGRES_PASSWORD
 - name: REPORT_PATH
   valueFrom:
     configMapKeyRef:
       name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
       key: report_path
+- name: SPRING_CLOUD_VAULT_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Release.Name }}-vault-secret
+      key: vault_token
 - name: LOG_PATH
   valueFrom:
     configMapKeyRef:
       name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
       key: log_path
 {{- end }}
+
 {{- define "backend.wait-for-mongo" -}}
 - name: wait-for-mongo
   image: mongo:7.0

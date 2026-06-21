@@ -12,6 +12,7 @@ env:
   SAUSAGE_STORE_NAMESPACE: ${{ secrets.KUBE_NAMESPACE }}
   KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
   VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+  VAULT_HOST: ${{ secrets.VAULT_HOST }}
 
 jobs:
   # Сборка и пуш образов в докерхаб:
@@ -107,7 +108,40 @@ jobs:
             --username "${NEXUS_HELM_REPO_USER}" \
             --password "${NEXUS_HELM_REPO_PASSWORD}"
           helm repo update
+      # Секреты из vault
+      - name: Fetch secrets from Vault via API
+        id: vault
+        run: |
+          SECRETS=$(curl -sS --fail \
+            -H "X-Vault-Token: ${{ env.VAULT_TOKEN }}" \
+            "${{ env.VAULT_HOST }}:8201/v1/secret/data/sausage-store" | jq -r '.data.data')
+
+          POSTGRES_USER=$(echo "$SECRETS" | jq -r '.postgresUser')
+          POSTGRES_PASSWORD=$(echo "$SECRETS" | jq -r '.postgresPassword')
+          MONGO_USER=$(echo "$SECRETS" | jq -r '.mongoRootUser')
+          MONGO_PASSWORD=$(echo "$SECRETS" | jq -r '.mongoRootPassword')
+          REPORT_USER=$(echo "$SECRETS" | jq -r '.reportDbUser')
+          REPORT_PASSWORD=$(echo "$SECRETS" | jq -r '.reportDbPassword')
+          
+          echo "::add-mask::$POSTGRES_PASSWORD"
+          echo "::add-mask::$MONGO_PASSWORD"
+          echo "::add-mask::$REPORT_PASSWORD"
+          
+          echo "postgres_user=$POSTGRES_USER" >> $GITHUB_OUTPUT
+          echo "postgres_password=$POSTGRES_PASSWORD" >> $GITHUB_OUTPUT
+          echo "mongo_user=$MONGO_USER" >> $GITHUB_OUTPUT
+          echo "mongo_password=$MONGO_PASSWORD" >> $GITHUB_OUTPUT
+          echo "report_user=$REPORT_USER" >> $GITHUB_OUTPUT
+          echo "report_password=$REPORT_PASSWORD" >> $GITHUB_OUTPUT
+      # Развертывание кластера
       - name: Deploy app
         run: |
           helm upgrade --install sausage-store nexus/sausage-store \
-            --namespace "${SAUSAGE_STORE_NAMESPACE}" 
+            --namespace "${SAUSAGE_STORE_NAMESPACE}" \
+            --set global.vault.vaultToken="${{ secrets.VAULT_TOKEN }}" \
+            --set global.postgresUser="${{ steps.vault.outputs.postgres_user }}" \
+            --set global.postgresPassword="${{ steps.vault.outputs.postgres_password }}" \
+            --set global.mongoRootUser="${{ steps.vault.outputs.mongo_user }}" \
+            --set global.mongoRootPassword="${{ steps.vault.outputs.mongo_password }}" \
+            --set global.reportDbUser="${{ steps.vault.outputs.report_user }}" \
+            --set global.reportDbPassword="${{ steps.vault.outputs.report_password }}"

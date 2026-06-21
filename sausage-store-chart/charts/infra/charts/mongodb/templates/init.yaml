@@ -60,7 +60,7 @@ spec:
                 });
                 print('User {{ .Values.global.reportDbUser }} created successfully.');
               } else {
-                print('User {{ .Values.global.reportDbUser }} already exists, skipping.');
+                print('User {{ .Values.global.reportDbUser }} already exists.');
               }
           env:
             - name: MONGO_INITDB_ROOT_USERNAME
