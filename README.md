@@ -34,3 +34,13 @@ sudo http-server ./dist/frontend/ -p 80 --proxy http://localhost:8080
 ```
 
 Then open your browser and go to [http://localhost](http://localhost)
+
+
+## Deployment and Access
+
+- The application is deployed in a Kubernetes cluster in the namespace
+  `r-devops-magistracy-project-2sem-1646581078`.
+- The ingress resource `sausage-store-frontend-ingress` (class `nginx`) uses the domain
+  `front-nevskiy-va.students-projects.ru` on IP `158.160.176.69` (ports 80 and 443).
+- The application's Helm chart is published in the Nexus repository:
+  [https://nexus.cloud-services-engineer.education-services.ru/repository/nevskiy-va-sausage-store/](https://nexus.cloud-services-engineer.education-services.ru/repository/nevskiy-va-sausage-store/)
