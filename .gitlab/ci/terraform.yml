@@ -1,0 +1,89 @@
+.terraform_defaults:
+  variables:
+    TF_ROOT: "${CI_PROJECT_DIR}/infra"
+    TF_HTTP_ADDRESS: "https://cloud-services-engineer.gitlab.yandexcloud.net/api/v4/projects/${CI_PROJECT_ID}/terraform/state/tfstate"
+    TF_HTTP_LOCK_ADDRESS: "https://cloud-services-engineer.gitlab.yandexcloud.net/api/v4/projects/${CI_PROJECT_ID}/terraform/state/tfstate/lock"
+    TF_HTTP_UNLOCK_ADDRESS: "https://cloud-services-engineer.gitlab.yandexcloud.net/api/v4/projects/${CI_PROJECT_ID}/terraform/state/tfstate/lock"
+    TF_HTTP_LOCK_METHOD: "POST"
+    TF_HTTP_UNLOCK_METHOD: "DELETE"
+    TF_HTTP_USERNAME: "terraform"
+    TF_HTTP_PASSWORD: "${TF_HTTP_PASSWORD}"
+
+.setup_key:
+  - echo "${AUTHORIZED_KEY}" | base64 -d > "${TF_ROOT}/authorized_key.json"
+
+terraform_fmt:
+  stage: validate
+  image:
+    name: hashicorp/terraform:light
+    entrypoint: [""]
+  script:
+    - cd "${CI_PROJECT_DIR}/infra"
+    - terraform fmt -check -recursive
+  allow_failure: false
+
+terraform_validate:
+  stage: validate
+  image:
+    name: bridgecrew/checkov:latest
+    entrypoint: [""]
+  script:
+    - checkov -d ./infra --config-file .checkov.yml
+  allow_failure: false
+
+terraform_plan:
+  extends: .terraform_defaults
+  stage: plan
+  needs:
+    - terraform_fmt
+    - terraform_validate
+  before_script:
+    - !reference [.setup_key]
+  script:
+    - cd "${TF_ROOT}"
+    - terraform init
+    - terraform plan -out=tfplan
+    - terraform show tfplan
+  artifacts:
+    name: "tfplan-${CI_COMMIT_SHA}"
+    paths:
+      - "${TF_ROOT}/tfplan"
+    expire_in: 1 week
+  allow_failure: false
+
+terraform_apply:
+  extends: .terraform_defaults
+  stage: apply
+  needs:
+    - job: terraform_plan
+      artifacts: true
+  before_script:
+    - !reference [.setup_key]
+  script:
+    - cd "${TF_ROOT}"
+    - terraform init
+    - terraform apply tfplan
+  artifacts:
+    paths:
+      - "${TF_ROOT}/outputs.json"
+  allow_failure: false
+  rules:
+    - when: manual
+
+terratest:
+  extends: .terraform_defaults
+  stage: terratest
+  image:
+    name: golang:1.27
+    entrypoint: [""]
+  before_script:
+    - !reference [.setup_key]
+  script:
+    - cd "${CI_PROJECT_DIR}/infra/test"
+    - go mod init terratest
+    - go mod tidy
+    - go test -v -timeout 30m
+  needs:
+    - job: terraform_apply
+      artifacts: true
+  allow_failure: false

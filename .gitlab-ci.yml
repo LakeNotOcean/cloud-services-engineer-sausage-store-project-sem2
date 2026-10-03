@@ -1,2 +1,26 @@
 include:
-  - local: '.gitlab/ci/terraform.yml'
+  - local: '/.gitlab/ci/terraform.yml'
+    rules:
+      - if: '$OPERATION == "terraform"'
+  - local: '/.gitlab/ci/ansible.yml'
+    rules:
+      - if: '$OPERATION == "ansible"'
+  - local: '/.gitlab/ci/k8s.yml'
+    rules:
+      - if: '$OPERATION == "k8s"'
+
+
+stages:
+  - validate
+  - plan
+  - apply
+  - terratest
+
+variables:
+  OPERATION:
+    description: "Select CI/CD-operation"
+    value: "terraform"
+    options:
+      - "terraform"
+      - "ansible"
+      - "k8s"
