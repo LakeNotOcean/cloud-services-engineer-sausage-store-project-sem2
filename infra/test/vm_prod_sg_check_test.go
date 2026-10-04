@@ -15,9 +15,8 @@ func TestProdSecurityGroup(t *testing.T) {
 		TerraformDir: "..",
 	}
 
-
 	// Инициализация и применение Terraform
-   terraform.InitAndApply(t, terraformOptions)
+	terraform.InitAndApply(t, terraformOptions)
 
 	// Получение имени SG
 	prodSGName := terraform.Output(t, terraformOptions, "prod_sg_name")
@@ -34,7 +33,7 @@ func TestProdSecurityGroup(t *testing.T) {
 		t.Fatalf("Failed to initialize Yandex Cloud SDK: %v", err)
 	}
 
-	folderID := terraform.Output(t, terraformOptions, "folder_id") 
+	folderID := terraform.Output(t, terraformOptions, "folder_id")
 
 	// Проверка существования SG
 	vpcService := yc.VPC().SecurityGroup()

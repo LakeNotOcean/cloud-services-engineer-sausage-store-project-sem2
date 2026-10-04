@@ -114,6 +114,11 @@ terratest:
   script:
     - cd "${TF_ROOT}/test"
     - go mod init terratest
+    # из-за конфликтов
+    - go get github.com/gruntwork-io/terratest@v0.46.16
+    - go get github.com/yandex-cloud/go-sdk@latest
+    - go get github.com/yandex-cloud/go-genproto@latest
+    - go get github.com/stretchr/testify@latest
     - go mod tidy
     - go test -v -timeout 30m
   needs:
