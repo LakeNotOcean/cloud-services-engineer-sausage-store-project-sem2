@@ -92,11 +92,24 @@ func getYCToken(t *testing.T) ycsdk.Credentials {
 
 // Функция для выполнения ping
 func pingAddress(address string) error {
+	maxAttempts := 15
+	sleepDuration := 10 * time.Second
 	// Проверяем доступность IP через TCP-соединение (ping может быть заблокирован)
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:22", address), 5*time.Second)
-	if err != nil {
-		return fmt.Errorf("failed to connect to %s: %v", address, err)
+	for i := 1; i <= maxAttempts; i++ {
+		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:22", address), 5*time.Second)
+
+		if err == nil {
+			conn.Close()
+			fmt.Printf("Successfully connected to %s:22 on attempt %d\n", address, i)
+			return nil
+		}
+
+		if i < maxAttempts {
+			fmt.Printf("Attempt %d/%d failed for %s:22 (%v). Retrying in %v...\n",
+				i, maxAttempts, address, err, sleepDuration)
+			time.Sleep(sleepDuration)
+		}
 	}
-	conn.Close()
-	return nil
+
+	return fmt.Errorf("failed to connect to %s: %v", address, maxAttempts)
 }
