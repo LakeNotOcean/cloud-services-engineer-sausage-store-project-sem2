@@ -9,7 +9,7 @@
     VM_DEV_ADDRESS: "${VM_DEV_IP_ADDRESS}"
     SSH_PRIVATE_KEY: "${SSH_PRIVATE_KEY_B64}"
     VAULT_DEV_ROOT_TOKEN_ID: "${VAULT_TOKEN}"
-    VM_USER: "${TF_VAR_VM_USER:-ubuntu}"
+    VM_USER: "${TF_VAR_VM_USER}"
 
 .setup_ssh:
   - export ANSIBLE_REMOTE_USER="${VM_USER}"
