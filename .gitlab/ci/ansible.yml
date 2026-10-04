@@ -9,11 +9,20 @@
     VM_DEV_ADDRESS: "${VM_DEV_IP_ADDRESS}"
     SSH_PRIVATE_KEY: "${SSH_PRIVATE_KEY_B64}"
     VAULT_DEV_ROOT_TOKEN_ID: "${VAULT_TOKEN}"
+    VM_USER: "${TF_VAR_VM_USER:-ubuntu}"
 
 .setup_ssh:
+  - export ANSIBLE_REMOTE_USER="${VM_USER}"
   - mkdir -p "$(dirname "${VM_SSH_KEY_PATH}")" && chmod 700 "$(dirname "${VM_SSH_KEY_PATH}")"
   - echo "${SSH_PRIVATE_KEY}" | base64 -d > "${VM_SSH_KEY_PATH}"
   - chmod 600 "${VM_SSH_KEY_PATH}"
+  - |
+    echo "=== DEBUG ==="
+    echo "ANSIBLE_REMOTE_USER=${ANSIBLE_REMOTE_USER}"
+    echo "VM_DEV_ADDRESS=${VM_DEV_ADDRESS}"
+    echo "VM_SSH_KEY_PATH=${VM_SSH_KEY_PATH}"
+    ls -la "$(dirname "${VM_SSH_KEY_PATH}")"
+    echo "=== END DEBUG ==="
 
 ansible_lint:
   extends: .ansible_defaults
@@ -32,7 +41,12 @@ ansible_deploy:
     - !reference [.setup_ssh]
   script:
     - cd "${ANSIBLE_ROOT}"
-    - ansible-playbook -i "${ANSIBLE_INVENTORY}" -u "${ANSIBLE_REMOTE_USER}" --private-key "${VM_SSH_KEY_PATH}" vault-playbook.yml
+    - |
+      ansible-playbook -i "${ANSIBLE_INVENTORY}" \
+        -u "${ANSIBLE_REMOTE_USER}" \
+        --private-key "${VM_SSH_KEY_PATH}" \
+        -vvv \
+        vault-playbook.yml
   after_script:
     - |
       echo "VM_DEV_ADDRESS=${VM_DEV_ADDRESS}"       > build.env
