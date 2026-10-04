@@ -55,6 +55,21 @@ terraform_plan:
     - !reference [.setup_key]
   script:
     - cd "${TF_ROOT}"
+    
+    - echo "===== DEBUG: Environment Variables ====="
+    - echo "TF_ROOT=[$TF_ROOT]"
+    - echo "CI_PROJECT_ID=[$CI_PROJECT_ID]"
+    - echo "TF_HTTP_ADDRESS=[$TF_HTTP_ADDRESS]"
+    - echo "TF_HTTP_USERNAME=[$TF_HTTP_USERNAME]"
+    - echo "TF_HTTP_PASSWORD length=[${#TF_HTTP_PASSWORD}]"
+    - echo "TF_HTTP_LOCK_METHOD=[$TF_HTTP_LOCK_METHOD]"
+    - echo "TF_VAR_folder_id=[$TF_VAR_folder_id]"
+    - echo "TF_VAR_zone=[$TF_VAR_zone]"
+    - echo ""
+    - echo "===== DEBUG: All TF_* variables ====="
+    
+    - env | grep "^TF_" | sort
+    - echo "===== END DEBUG ====="
     - terraform init
     - terraform plan -out=tfplan
     - terraform show tfplan
