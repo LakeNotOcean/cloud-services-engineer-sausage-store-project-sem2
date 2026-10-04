@@ -2,13 +2,6 @@ resource "yandex_vpc_network" "network" {
   name = "sausage-store-network"
 }
 
-resource "yandex_vpc_subnet" "subnet" {
-  name           = "sausage-store-subnet"
-  zone           = var.zone
-  network_id     = yandex_vpc_network.network.id
-  v4_cidr_blocks = var.v4_cidr_blocks
-}
-
 locals {
   # общие правила
   sg_common_rules = {
@@ -47,7 +40,7 @@ locals {
       }
     }
     prod = {
-      subnet_name = "dev-subnet"
+      subnet_name = "prod-subnet"
       v4_cidr     = "192.168.20.0/24"
       sg_name     = "prod-sg"
       labels = {

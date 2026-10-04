@@ -5,8 +5,6 @@ terraform {
       version = "~> 0.89.0"
     }
   }
-
-  backend "http" {}
 }
 
 provider "yandex" {

@@ -10,7 +10,6 @@ resource "yandex_compute_instance" "vm_dev" {
   platform_id               = var.platform_id
   zone                      = var.zone
   allow_stopping_for_update = true
-  deletion_protection       = false
 
   resources {
     cores         = var.cores
@@ -19,7 +18,7 @@ resource "yandex_compute_instance" "vm_dev" {
   }
 
   scheduling_policy {
-    preemptible = true
+    preemptible = false
   }
 
   boot_disk {

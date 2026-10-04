@@ -18,7 +18,7 @@ variable "catalog_name" {
 variable "image_id" {
   description = "ID образа для загрузочного диска"
   type        = string
-  default     = "d8fpk9lkplfjrc5s2gg"
+  default     = "fd8k6or569jh7bsajilr"
 }
 
 variable "ssh_public_key" {
@@ -54,7 +54,7 @@ variable "core_fraction" {
 variable "platform_id" {
   description = "Платформа виртуальной машины"
   type        = string
-  default     = "standard-v3"
+  default     = "standard-v1"
 }
 
 variable "disk_type" {

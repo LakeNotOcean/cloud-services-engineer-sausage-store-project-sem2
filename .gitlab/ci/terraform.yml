@@ -8,6 +8,16 @@
     TF_HTTP_UNLOCK_METHOD: "DELETE"
     TF_HTTP_USERNAME: "terraform"
     TF_HTTP_PASSWORD: "${TF_HTTP_PASSWORD}"
+    TF_VAR_folder_id: "${TF_VAR_folder_id}"
+    TF_VAR_zone: "${TF_VAR_zone}"
+    TF_VAR_catalog_name: "${TF_VAR_catalog_name}"
+    TF_VAR_image_id: "${TF_VAR_image_id}"
+    TF_VAR_vm_user: "${TF_VAR_vm_user}"
+    TF_VAR_ssh_public_key: "${TF_VAR_ssh_public_key}"
+    TF_VAR_cores: "${TF_VAR_cores}"
+    TF_VAR_memory: "${TF_VAR_memory}"
+    TF_VAR_core_fraction: "${TF_VAR_core_fraction}"
+    TF_VAR_disk_size: "${TF_VAR_disk_size}"
 
 .setup_key:
   - echo "${AUTHORIZED_KEY}" | base64 -d > "${TF_ROOT}/authorized_key.json"

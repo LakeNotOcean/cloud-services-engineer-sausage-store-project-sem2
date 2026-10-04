@@ -10,7 +10,6 @@ resource "yandex_compute_instance" "vm_prod" {
   platform_id               = var.platform_id
   zone                      = var.zone
   allow_stopping_for_update = true
-  deletion_protection       = true
 
   resources {
     cores         = var.cores

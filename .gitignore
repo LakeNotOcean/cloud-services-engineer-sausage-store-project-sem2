@@ -1,2 +1,8 @@
 .env
 .kube
+
+# Terraform
+*.tfvars
+infra/backend.hcl
+infra/authorized_key.json
+infra/.terraform*
