@@ -1,13 +1,7 @@
 include:
   - local: '/.gitlab/ci/terraform.yml'
-    rules:
-      - if: '$OPERATION == "terraform"'
   - local: '/.gitlab/ci/ansible.yml'
-    rules:
-      - if: '$OPERATION == "ansible"'
   - local: '/.gitlab/ci/k8s.yml'
-    rules:
-      - if: '$OPERATION == "k8s"'
 
 
 stages:

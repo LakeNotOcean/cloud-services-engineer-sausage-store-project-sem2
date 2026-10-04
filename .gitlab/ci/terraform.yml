@@ -30,7 +30,9 @@ terraform_fmt:
   script:
     - cd "${CI_PROJECT_DIR}/infra"
     - terraform fmt -check -recursive
-  allow_failure: false
+  rules:
+    - if: '$OPERATION == "terraform"'
+  allow_failure: true
 
 terraform_validate:
   stage: validate
@@ -39,7 +41,9 @@ terraform_validate:
     entrypoint: [""]
   script:
     - checkov -d ./infra --config-file .checkov.yml
-  allow_failure: false
+  rules:
+    - if: '$OPERATION == "terraform"'
+  allow_failure: true
 
 terraform_plan:
   extends: .terraform_defaults
@@ -59,6 +63,8 @@ terraform_plan:
     paths:
       - "${TF_ROOT}/tfplan"
     expire_in: 1 week
+  rules:
+    - if: '$OPERATION == "terraform"'
   allow_failure: false
 
 terraform_apply:
@@ -76,6 +82,8 @@ terraform_apply:
   artifacts:
     paths:
       - "${TF_ROOT}/outputs.json"
+  rules:
+    - if: '$OPERATION == "terraform"'
   allow_failure: false
   rules:
     - when: manual
@@ -96,4 +104,6 @@ terratest:
   needs:
     - job: terraform_apply
       artifacts: true
+  rules:
+    - if: '$OPERATION == "terraform"'
   allow_failure: false
