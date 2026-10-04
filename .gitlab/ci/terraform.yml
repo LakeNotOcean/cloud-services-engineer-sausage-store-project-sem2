@@ -18,7 +18,6 @@
     TF_VAR_memory: "${TF_VAR_memory}"
     TF_VAR_core_fraction: "${TF_VAR_core_fraction}"
     TF_VAR_disk_size: "${TF_VAR_disk_size}"
-
 .setup_key:
   - echo "${AUTHORIZED_KEY}" | base64 -d > "${TF_ROOT}/authorized_key.json"
 
@@ -28,7 +27,7 @@ terraform_fmt:
     name: hashicorp/terraform:light
     entrypoint: [""]
   script:
-    - cd "${CI_PROJECT_DIR}/infra"
+    - cd "${TF_ROOT}"
     - terraform fmt -check -recursive
   rules:
     - if: '$OPERATION == "terraform"'
@@ -40,7 +39,7 @@ terraform_validate:
     name: bridgecrew/checkov:latest
     entrypoint: [""]
   script:
-    - cd "${CI_PROJECT_DIR}/infra"
+    - cd "${TF_ROOT}"
     - checkov -d . --config-file .checkov.yml
   rules:
     - if: '$OPERATION == "terraform"'
@@ -111,7 +110,7 @@ terratest:
   before_script:
     - !reference [.setup_key]
   script:
-    - cd "${CI_PROJECT_DIR}/infra/test"
+    - cd "${TF_ROOT}/test"
     - go mod init terratest
     - go mod tidy
     - go test -v -timeout 30m
