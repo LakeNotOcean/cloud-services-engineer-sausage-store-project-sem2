@@ -11,7 +11,6 @@
     VAULT_DEV_ROOT_TOKEN_ID: "${VAULT_TOKEN}"
 
 .setup_ssh:
-  - export ANSIBLE_REMOTE_USER="${TF_VAR_VM_USER:-ubuntu}"
   - mkdir -p "$(dirname "${VM_SSH_KEY_PATH}")" && chmod 700 "$(dirname "${VM_SSH_KEY_PATH}")"
   - echo "${SSH_PRIVATE_KEY}" | base64 -d > "${VM_SSH_KEY_PATH}"
   - chmod 600 "${VM_SSH_KEY_PATH}"
@@ -33,7 +32,7 @@ ansible_deploy:
     - !reference [.setup_ssh]
   script:
     - cd "${ANSIBLE_ROOT}"
-    - ansible-playbook -i "${ANSIBLE_INVENTORY}" vault-playbook.yml
+    - ansible-playbook -i "${ANSIBLE_INVENTORY}" -u "${ANSIBLE_REMOTE_USER}" --private-key "${VM_SSH_KEY_PATH}" vault-playbook.yml
   after_script:
     - |
       echo "VM_DEV_ADDRESS=${VM_DEV_ADDRESS}"       > build.env
