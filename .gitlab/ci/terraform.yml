@@ -7,17 +7,17 @@
     TF_HTTP_LOCK_METHOD: "POST"
     TF_HTTP_UNLOCK_METHOD: "DELETE"
     TF_HTTP_USERNAME: "terraform"
-    # TF_HTTP_PASSWORD: "${TF_HTTP_PASSWORD}"
-    # TF_VAR_folder_id: "${TF_VAR_folder_id}"
-    # TF_VAR_zone: "${TF_VAR_zone}"
-    # TF_VAR_catalog_name: "${TF_VAR_catalog_name}"
-    # TF_VAR_image_id: "${TF_VAR_image_id}"
-    # TF_VAR_vm_user: "${TF_VAR_vm_user}"
-    # TF_VAR_ssh_public_key: "${TF_VAR_ssh_public_key}"
-    # TF_VAR_cores: "${TF_VAR_cores}"
-    # TF_VAR_memory: "${TF_VAR_memory}"
-    # TF_VAR_core_fraction: "${TF_VAR_core_fraction}"
-    # TF_VAR_disk_size: "${TF_VAR_disk_size}"
+    TF_HTTP_PASSWORD: "${TF_HTTP_PASSWORD_SECRET}"
+    TF_VAR_folder_id: "${TF_VAR_FOLDER_ID}"
+    TF_VAR_zone: "${TF_VAR_ZONE}"
+    TF_VAR_catalog_name: "${TF_VAR_CATALOG_NAME}"
+    TF_VAR_image_id: "${TF_VAR_IMAGE_ID}"
+    TF_VAR_vm_user: "${TF_VAR_VM_USER}"
+    TF_VAR_ssh_public_key: "${TF_VAR_SSH_PUBLIC_KEY}"
+    TF_VAR_cores: "${TF_VAR_CORES}"
+    TF_VAR_memory: "${TF_VAR_MEMORY}"
+    TF_VAR_core_fraction: "${TF_VAR_CORE_FRACTION}"
+    TF_VAR_disk_size: "${TF_VAR_DISK_SIZE}"
 .setup_key:
   - echo "${AUTHORIZED_KEY}" | base64 -d > "${TF_ROOT}/authorized_key.json"
 
@@ -92,6 +92,9 @@ terraform_apply:
 terraform_destroy:
   extends: .terraform_defaults
   stage: destroy
+  needs:
+    - job: terraform_plan
+      artifacts: true
   before_script:
     - !reference [.setup_key]
   script:

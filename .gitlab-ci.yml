@@ -7,8 +7,8 @@ include:
 stages:
   - validate
   - plan
-  - apply
   - destroy
+  - apply
   - terratest
 
 workflow:
