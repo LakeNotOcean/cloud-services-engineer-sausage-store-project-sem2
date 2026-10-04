@@ -1,0 +1,32 @@
+---
+- name: Install required system packages
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+    state: present
+    update_cache: true
+
+- name: Add Docker GPG apt key
+  ansible.builtin.shell: >
+    install -m 0755 -d /etc/apt/keyrings &&
+    curl -fsSL {{ docker_gpg_url }} -o {{ docker_gpg_key }} &&
+    chmod a+r {{ docker_gpg_key }}
+  args:
+    creates: "{{ docker_gpg_key }}"
+
+- name: Add Docker repository
+  ansible.builtin.apt_repository:
+    repo: "{{ docker_repository }}"
+    filename: docker
+    state: present
+
+- name: Install Docker
+  ansible.builtin.apt:
+    name: "{{ docker_install_packages }}"
+    state: present
+    update_cache: true
+
+- name: Ensure Docker service is running
+  ansible.builtin.service:
+    name: "{{ docker_service }}"
+    state: started
+    enabled: true

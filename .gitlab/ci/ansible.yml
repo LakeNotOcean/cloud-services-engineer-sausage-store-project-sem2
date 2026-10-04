@@ -1,0 +1,48 @@
+.ansible_defaults:
+  image:
+    name: willhallonline/ansible:latest
+    entrypoint: [""]
+  variables:
+    ANSIBLE_ROOT: "${CI_PROJECT_DIR}/ansible"
+    ANSIBLE_INVENTORY: "${ANSIBLE_ROOT}/inventory/vm.yml"
+    VM_SSH_KEY_PATH: "${CI_PROJECT_DIR}/.ssh/vm_key"
+    VM_DEV_ADDRESS: "${VM_DEV_IP_ADDRESS}"
+    SSH_PRIVATE_KEY: "${SSH_PRIVATE_KEY_B64}"
+    VAULT_DEV_ROOT_TOKEN_ID: "${VAULT_TOKEN}"
+
+.setup_ssh:
+  - export ANSIBLE_REMOTE_USER="${TF_VAR_VM_USER:-ubuntu}"
+  - mkdir -p "$(dirname "${VM_SSH_KEY_PATH}")" && chmod 700 "$(dirname "${VM_SSH_KEY_PATH}")"
+  - echo "${SSH_PRIVATE_KEY}" | base64 -d > "${VM_SSH_KEY_PATH}"
+  - chmod 600 "${VM_SSH_KEY_PATH}"
+
+ansible_lint:
+  extends: .ansible_defaults
+  stage: validate
+  script:
+    - cd "${ANSIBLE_ROOT}"
+    - ansible-playbook --syntax-check -i "${ANSIBLE_INVENTORY}" vault-playbook.yml
+  rules:
+    - if: '$OPERATION == "ansible"'
+  allow_failure: true
+
+ansible_deploy:
+  extends: .ansible_defaults
+  stage: provision
+  before_script:
+    - !reference [.setup_ssh]
+  script:
+    - cd "${ANSIBLE_ROOT}"
+    - ansible-playbook -i "${ANSIBLE_INVENTORY}" vault-playbook.yml
+  after_script:
+    - |
+      echo "VM_DEV_ADDRESS=${VM_DEV_ADDRESS}"       > build.env
+      echo "VAULT_ADDR=http://${VM_DEV_ADDRESS}:8200" >> build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+    expire_in: 1 week
+  rules:
+    - if: '$OPERATION == "ansible"'
+      when: manual
+  allow_failure: false

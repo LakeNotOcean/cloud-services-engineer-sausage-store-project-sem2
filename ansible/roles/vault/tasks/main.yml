@@ -1,0 +1,73 @@
+---
+# запуск
+- name: Create Vault data directory
+  ansible.builtin.file:
+    path: "{{ vault_data_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Run Vault container i(dev)
+  community.docker.docker_container:
+    name: "{{ vault_container_name }}"
+    image: "{{ vault_image }}"
+    state: started
+    restart_policy: unless-stopped
+    ipc_mode: host
+    ports:
+      - "{{ vault_port }}:8200"
+    volumes:
+      - "{{ vault_data_dir }}:/vault/data"
+    env:
+      VAULT_DEV_ROOT_TOKEN_ID: "{{ vault_dev_root_token_id }}"
+    command: >-
+      vault server -dev
+      -dev-listen-address=0.0.0.0:{{ vault_port }}
+
+# ждем
+- name: Wait for Vault API
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/sys/seal-status"
+    status_code: [200]
+  register: vault_health
+  retries: 10
+  delay: 3
+  until: vault_health.status == 200
+
+
+# монтируем
+- name: Enable KV v2 engine
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/sys/mounts/{{ vault_kv_path }}"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ vault_dev_root_token_id }}"
+    body_format: json
+    body:
+      type: kv
+      options:
+        version: "2"
+    status_code: [200, 204, 400]
+  register: kv_mount
+  changed_when: kv_mount.status in [200, 204]
+  no_log: true
+
+- name: Write application secrets
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ vault_port }}/v1/{{ vault_kv_path }}/data/{{ vault_secret_path }}"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ vault_dev_root_token_id }}"
+    body_format: json
+    body:
+      data: "{{ vault_secrets }}"
+    status_code: [200, 204]
+  no_log: true
+
+
+# итого
+- name: Vault is ready
+  ansible.builtin.debug:
+    msg:
+      - "Vault UI: http://{{ ansible_host }}:{{ vault_port }}"
+      - "Token: {{ vault_dev_root_token_id }}"
+      - "Secrets: {{ vault_kv_path }}/{{ vault_secret_path }}: {{ vault_secrets.keys() | join(', ') }}"

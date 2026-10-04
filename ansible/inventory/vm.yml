@@ -1,0 +1,8 @@
+all:
+  children:
+    dev:
+      hosts:
+        server:
+          ansible_host: "{{ lookup('env', 'VM_DEV_ADDRESS') }}"
+          ansible_user: "{{ lookup('env', 'VM_USER') }}"
+          ansible_ssh_private_key_file: "{{ lookup('env', 'VM_SSH_KEY_PATH') }}"

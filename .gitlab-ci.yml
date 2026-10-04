@@ -1,6 +1,6 @@
 include:
   - local: '/.gitlab/ci/terraform.yml'
-  # - local: '/.gitlab/ci/ansible.yml'
+  - local: '/.gitlab/ci/ansible.yml'
   # - local: '/.gitlab/ci/k8s.yml'
 
 
@@ -9,6 +9,7 @@ stages:
   - plan
   - destroy
   - apply
+  - provision
   - terratest
 
 workflow:

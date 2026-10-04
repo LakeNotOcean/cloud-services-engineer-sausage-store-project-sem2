@@ -1,0 +1,17 @@
+---
+docker_packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - lsb-release
+docker_gpg_url: "https://download.docker.com/linux/ubuntu/gpg"
+docker_gpg_key: "/etc/apt/keyrings/docker.asc"
+docker_repository: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+docker_install_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+docker_service: docker
