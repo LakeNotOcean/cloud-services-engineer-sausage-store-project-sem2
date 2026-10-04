@@ -84,9 +84,22 @@ terraform_apply:
       - "${TF_ROOT}/outputs.json"
   rules:
     - if: '$OPERATION == "terraform"'
+      when: manual
   allow_failure: false
+
+terraform_destroy:
+  extends: .terraform_defaults
+  stage: destroy
+  before_script:
+    - !reference [.setup_key]
+  script:
+    - cd "${TF_ROOT}"
+    - terraform init
+    - terraform destroy -auto-approve
   rules:
-    - when: manual
+    - if: '$OPERATION == "terraform"'
+      when: manual
+  allow_failure: false
 
 terratest:
   extends: .terraform_defaults

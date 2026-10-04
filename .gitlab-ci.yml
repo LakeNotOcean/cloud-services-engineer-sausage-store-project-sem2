@@ -8,7 +8,14 @@ stages:
   - validate
   - plan
   - apply
+  - destroy
   - terratest
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - when: always
 
 variables:
   OPERATION:
