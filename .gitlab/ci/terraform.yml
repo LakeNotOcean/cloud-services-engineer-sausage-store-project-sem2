@@ -40,7 +40,8 @@ terraform_validate:
     name: bridgecrew/checkov:latest
     entrypoint: [""]
   script:
-    - checkov -d ./infra --config-file .checkov.yml
+    - cd "${CI_PROJECT_DIR}/infra"
+    - checkov -d . --config-file .checkov.yml
   rules:
     - if: '$OPERATION == "terraform"'
   allow_failure: true

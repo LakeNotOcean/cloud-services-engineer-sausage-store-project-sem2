@@ -1,7 +1,7 @@
 skip-check:
   - CKV_SECRET_13        
 external-checks-dir:
-  - ./infra/terraform/custom_policies
+  - ./custom_policies
 
 output: cli
 soft-fail: true
