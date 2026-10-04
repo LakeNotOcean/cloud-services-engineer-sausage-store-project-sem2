@@ -22,6 +22,7 @@
   - echo "${AUTHORIZED_KEY}" | base64 -d > "${TF_ROOT}/authorized_key.json"
 
 terraform_fmt:
+  extends: .terraform_defaults
   stage: validate
   image:
     name: hashicorp/terraform:light
@@ -34,6 +35,7 @@ terraform_fmt:
   allow_failure: true
 
 terraform_validate:
+  extends: .terraform_defaults
   stage: validate
   image:
     name: bridgecrew/checkov:latest
