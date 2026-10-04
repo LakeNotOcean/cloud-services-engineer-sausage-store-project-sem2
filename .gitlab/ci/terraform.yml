@@ -55,7 +55,6 @@ terraform_plan:
     - !reference [.setup_key]
   script:
     - cd "${TF_ROOT}"
-    
     - echo "===== DEBUG: Environment Variables ====="
     - echo "TF_ROOT=[$TF_ROOT]"
     - echo "CI_PROJECT_ID=[$CI_PROJECT_ID]"
@@ -67,7 +66,6 @@ terraform_plan:
     - echo "TF_VAR_zone=[$TF_VAR_zone]"
     - echo ""
     - echo "===== DEBUG: All TF_* variables ====="
-    
     - env | grep "^TF_" | sort
     - echo "===== END DEBUG ====="
     - terraform init
