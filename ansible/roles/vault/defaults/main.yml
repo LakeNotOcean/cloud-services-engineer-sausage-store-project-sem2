@@ -10,7 +10,7 @@ vault_dev_root_token_id: "{{ lookup('env', 'VAULT_DEV_ROOT_TOKEN_ID') | default(
 
 # секреты приложений
 vault_kv_path: secret
-vault_secret_path: sausage-store
+vault_secret_path: app
 vault_secrets:
   spring.datasource.username: "{{ lookup('env', 'VAULT_SPRING_DATASOURCE_USERNAME') }}"
   spring.datasource.password: "{{ lookup('env', 'VAULT_SPRING_DATASOURCE_PASSWORD') }}"
