@@ -21,6 +21,7 @@
 .setup_key:
   - echo "${AUTHORIZED_KEY}" | base64 -d > "${TF_ROOT}/authorized_key.json"
 
+# проверки
 terraform_fmt:
   extends: .terraform_defaults
   stage: validate
@@ -47,6 +48,7 @@ terraform_validate:
     - if: '$OPERATION == "terraform"'
   allow_failure: true
 
+# план
 terraform_plan:
   extends: .terraform_defaults
   stage: plan
@@ -69,6 +71,7 @@ terraform_plan:
     - if: '$OPERATION == "terraform"'
   allow_failure: false
 
+# применение
 terraform_apply:
   extends: .terraform_defaults
   stage: apply
@@ -89,6 +92,7 @@ terraform_apply:
       when: manual
   allow_failure: false
 
+# удаление
 terraform_destroy:
   extends: .terraform_defaults
   stage: destroy
@@ -106,6 +110,7 @@ terraform_destroy:
       when: manual
   allow_failure: false
 
+# тесты
 terratest:
   extends: .terraform_defaults
   stage: terratest
