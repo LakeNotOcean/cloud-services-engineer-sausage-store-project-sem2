@@ -1,0 +1,14 @@
+name: check-secret
+
+on: workflow_dispatch
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check secret presence
+        env:
+          SECRET: ${{ secrets.NEXUS_HELM_REPO_PASSWORD  }}
+        run: |
+            echo "${SECRET}"
+      
