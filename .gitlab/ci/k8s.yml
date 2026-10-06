@@ -1,0 +1,41 @@
+.k8s_defaults:
+  variables:
+    CHART_ROOT: "${CI_PROJECT_DIR}/sausage-store-chart"
+    BACKEND_IMAGE: "${DOCKER_USER}/sausage-backend:latest"
+    FRONTEND_IMAGE: "${DOCKER_USER}/sausage-frontend:latest"
+    REPORT_IMAGE: "${DOCKER_USER}/sausage-backend-report:latest"
+
+# сборка и пуш Docker-образов в DockerHub
+docker_build_push:
+  extends: .k8s_defaults
+  stage: build
+  before_script:
+    - docker login -u "${DOCKER_USER}" -p "${DOCKER_PASSWORD}"
+  script:
+    - docker build --build-arg VERSION="${CI_COMMIT_SHA}" --push -t "${BACKEND_IMAGE}" ./backend/
+    - docker build --push -t "${FRONTEND_IMAGE}" ./frontend/
+    - docker build --push -t "${REPORT_IMAGE}" ./backend-report/
+  rules:
+    - if: '$OPERATION == "k8s"'
+  allow_failure: false
+
+# обновление helm-чарта в Nexus
+helm_package_push:
+  extends: .k8s_defaults
+  stage: package
+  image:
+    name: alpine/helm:4.3
+    entrypoint: [""]
+  before_script:
+    - apk add --no-cache curl
+  script:
+    - helm package "${CHART_ROOT}"
+    - curl --fail -u "${NEXUS_HELM_REPO_USER}:${NEXUS_HELM_REPO_PASSWORD}" --upload-file sausage-store-*.tgz "${NEXUS_HELM_REPO}/"
+  needs:
+    - docker_build_push
+  rules:
+    - if: '$OPERATION == "k8s"'
+      when: manual
+  tags:
+    - docker
+  allow_failure: false

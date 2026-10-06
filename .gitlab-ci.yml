@@ -1,7 +1,7 @@
 include:
   - local: '/.gitlab/ci/terraform.yml'
   - local: '/.gitlab/ci/ansible.yml'
-  # - local: '/.gitlab/ci/k8s.yml'
+  - local: '/.gitlab/ci/k8s.yml'
 
 
 stages:
@@ -11,6 +11,8 @@ stages:
   - apply
   - provision
   - terratest
+  - build
+  - package
 
 workflow:
   rules:
