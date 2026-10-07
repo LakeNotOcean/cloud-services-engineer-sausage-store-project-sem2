@@ -3,7 +3,7 @@ kind: Application
 metadata:
   name: sausage-store-s18727602
 spec:
-  project: project-s18727602
+  project: s18727602
   destination:
     namespace: r-devops-magistracy-project-3sem-1646581078
     server: 'https://kubernetes.default.svc'
