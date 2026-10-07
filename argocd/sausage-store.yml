@@ -9,7 +9,7 @@ spec:
     server: 'https://kubernetes.default.svc'
   source:
     path: ''
-    repoURL: 'https://nexus.cloud-services-engineer.education-services.ru/repository/nevskiy-va-sausage-store'
+    repoURL: 'https://nexus.cloud-services-engineer.education-services.ru/repository/nevskiy-va-sausage-store/'
     targetRevision: 0.1.0
     chart: sausage-store
     helm:
@@ -72,7 +72,3 @@ spec:
           mongodb:
             storage: 1Gi
             storageClassName: "yc-network-hdd"
-  syncPolicy:
-    automated:
-      prune: false
-      selfHeal: false
