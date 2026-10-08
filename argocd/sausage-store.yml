@@ -10,7 +10,7 @@ spec:
   source:
     path: ''
     repoURL: 'https://nexus.cloud-services-engineer.education-services.ru/repository/nevskiy-va-sausage-store/'
-    targetRevision: 0.1.0
+    targetRevision: 0.1.1
     chart: sausage-store
     helm:
       values: |
