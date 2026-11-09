@@ -18,6 +18,9 @@
     TF_VAR_memory: "${TF_VAR_MEMORY}"
     TF_VAR_core_fraction: "${TF_VAR_CORE_FRACTION}"
     TF_VAR_disk_size: "${TF_VAR_DISK_SIZE}"
+  tags:
+    docker
+  image: hashicorp/terraform:light 
 .setup_key:
   - echo "${AUTHORIZED_KEY}" | base64 -d > "${TF_ROOT}/authorized_key.json"
 
