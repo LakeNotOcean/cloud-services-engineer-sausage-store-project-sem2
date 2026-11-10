@@ -1,6 +1,7 @@
 .terraform_defaults:
   variables:
     TF_ROOT: "${CI_PROJECT_DIR}/infra"
+    TF_CLI_CONFIG_FILE: "${CI_PROJECT_DIR}/.gitlab/ci/terraform.rc"
     TF_HTTP_ADDRESS: "https://cloud-services-engineer.gitlab.students-projects.ru/api/v4/projects/${CI_PROJECT_ID}/terraform/state/tfstate"
     TF_HTTP_LOCK_ADDRESS: "https://cloud-services-engineer.gitlab.students-projects.ru/api/v4/projects/${CI_PROJECT_ID}/terraform/state/tfstate/lock"
     TF_HTTP_UNLOCK_ADDRESS: "https://cloud-services-engineer.gitlab.students-projects.ru/api/v4/projects/${CI_PROJECT_ID}/terraform/state/tfstate/lock"
