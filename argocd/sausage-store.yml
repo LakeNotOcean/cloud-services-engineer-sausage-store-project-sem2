@@ -3,14 +3,14 @@ kind: Application
 metadata:
   name: sausage-store-s18727602
 spec:
-  project: project-s18727602
+  project: s18727602
   destination:
     namespace: r-devops-magistracy-project-3sem-1646581078
     server: 'https://kubernetes.default.svc'
   source:
     path: ''
-    repoURL: 'https://nexus.cloud-services-engineer.education-services.ru/repository/nevskiy-va-sausage-store'
-    targetRevision: 0.1.0
+    repoURL: 'https://nexus.cloud-services-engineer.education-services.ru/repository/nevskiy-va-sausage-store/'
+    targetRevision: 0.1.1
     chart: sausage-store
     helm:
       values: |
@@ -41,8 +41,8 @@ spec:
                   cpu: "100m"
           vault:
             enabled: true
-            host: "93.77.183.14"
-            port: 8201
+            host: "89.169.151.100"
+            port: 8200
             scheme: http
             name: vault
             vaultToken: someToken
@@ -72,7 +72,3 @@ spec:
           mongodb:
             storage: 1Gi
             storageClassName: "yc-network-hdd"
-  syncPolicy:
-    automated:
-      prune: false
-      selfHeal: false

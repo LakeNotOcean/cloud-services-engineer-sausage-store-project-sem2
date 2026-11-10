@@ -15,3 +15,10 @@ vault_secrets:
   spring.datasource.username: "{{ lookup('env', 'VAULT_SPRING_DATASOURCE_USERNAME') }}"
   spring.datasource.password: "{{ lookup('env', 'VAULT_SPRING_DATASOURCE_PASSWORD') }}"
   spring.data.mongodb.uri: "{{ lookup('env', 'VAULT_SPRING_DATA_MONGODB_URI') }}"
+  postgresUser: "{{ lookup('env', 'VAULT_SPRING_DATASOURCE_USERNAME') }}"
+  postgresPassword: "{{ lookup('env', 'VAULT_SPRING_DATASOURCE_PASSWORD') }}"
+  # здесь просто переменные по умолчанию 
+  mongoRootUser: "{{ lookup('env', 'VAULT_MONGO_ROOT_USER') | default('root', true) }}"
+  mongoRootPassword: "{{ lookup('env', 'VAULT_MONGO_ROOT_PASSWORD') | default('rootpassword', true) }}"
+  reportDbUser: "{{ lookup('env', 'VAULT_REPORT_DB_USER') | default('report_user', true) }}"
+  reportDbPassword: "{{ lookup('env', 'VAULT_REPORT_DB_PASSWORD') | default('report_pass', true) }}"

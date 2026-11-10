@@ -3,9 +3,7 @@ kind: Job
 metadata:
   name: {{ .Release.Name }}-mongodb-init
   annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "5"
-    "helm.sh/hook-delete-policy": before-hook-creation
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   backoffLimit: 3
   ttlSecondsAfterFinished: 300   # Автоочистка через 5 минут после завершения
