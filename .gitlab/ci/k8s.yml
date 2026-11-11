@@ -26,6 +26,8 @@ helm_package_push:
   image:
     name: alpine/helm:4.3
     entrypoint: [""]
+  tags:
+    - docker
   before_script:
     - apk add --no-cache curl
   script:
@@ -36,6 +38,4 @@ helm_package_push:
   rules:
     - if: '$OPERATION == "k8s"'
       when: manual
-  tags:
-    - docker
   allow_failure: false
