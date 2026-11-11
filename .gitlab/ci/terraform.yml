@@ -54,6 +54,20 @@ terraform_validate:
     - if: '$OPERATION == "terraform"'
   allow_failure: true
 
+terraform_bin:
+  extends: .terraform_defaults
+  stage: validate
+  script:
+    - mkdir -p "${CI_PROJECT_DIR}/bin"
+    - cp "$(command -v terraform)" "${CI_PROJECT_DIR}/bin/terraform"
+    - chmod +x "${CI_PROJECT_DIR}/bin/terraform"
+  artifacts:
+    paths:
+      - bin/terraform
+    expire_in: 1 day
+  rules:
+    - if: '$OPERATION == "terraform"'
+
 # план
 terraform_plan:
   extends: .terraform_defaults
@@ -125,6 +139,8 @@ terratest:
     entrypoint: [""]
   before_script:
     - !reference [.setup_key]
+    - export PATH="${CI_PROJECT_DIR}/bin:${PATH}"
+    - terraform version
   script:
     - cd "${TF_ROOT}/test"
     - go mod init terratest
