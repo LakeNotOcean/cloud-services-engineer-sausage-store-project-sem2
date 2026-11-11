@@ -154,6 +154,8 @@ terratest:
   needs:
     - job: terraform_apply
       artifacts: true
+    - job: terraform_bin
+      artifacts: true
   rules:
     - if: '$OPERATION == "terraform"'
   allow_failure: false
