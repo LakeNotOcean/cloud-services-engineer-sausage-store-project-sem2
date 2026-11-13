@@ -46,20 +46,38 @@ app.kubernetes.io/part-of: {{ .Release.Name }}
 - name: wait-for-mongo
   image: mongo:7.0
   command:
-    - mongosh
-  args:
-    - --host
-    - {{ .Release.Name }}-mongodb-service
-    - --port
-    - "{{ .Values.global.mongoPort }}"
-    - --username
-    - "{{ .Values.global.reportDbUser }}"
-    - --password
-    - "{{ .Values.global.reportDbPassword }}"
-    - --authenticationDatabase
-    - "{{ .Values.global.reportDbName }}"
-    - --eval
-    - "db.runCommand({ping: 1})"
+    - sh
+    - -c
+    - |
+      until mongosh --host {{ .Release.Name }}-mongodb-service \
+          --port {{ .Values.global.mongoPort }} \
+          --username "{{ .Values.global.reportDbUser }}" \
+          --password "{{ .Values.global.reportDbPassword }}" \
+          --authenticationDatabase "{{ .Values.global.reportDbName }}" \
+          --eval "db.runCommand({ping: 1})"; do
+        echo "Waiting for MongoDB..."
+        sleep 3
+      done
   resources:
     {{- toYaml .Values.global.initContainers.mongo.resources | nindent 4 }}
+{{- end }}
+
+{{- define "backend.wait-for-postgres" -}}
+- name: wait-for-postgres
+  image: postgres:13-alpine
+  command:
+    - sh
+    - -c
+    - |
+      until pg_isready -h {{ .Release.Name }}-postgresql-service -p {{ .Values.global.postgresPort }}; do
+        echo "Waiting for PostgreSQL..."
+        sleep 3
+      done
+  resources:
+    requests:
+      memory: "16Mi"
+      cpu: "10m"
+    limits:
+      memory: "32Mi"
+      cpu: "50m"
 {{- end }}

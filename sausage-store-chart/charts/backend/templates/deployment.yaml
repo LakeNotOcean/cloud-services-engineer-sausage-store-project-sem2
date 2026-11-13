@@ -24,6 +24,7 @@ spec:
         app: {{ .Release.Name }}-{{ .Chart.Name }}
     spec:
       initContainers:
+        {{- include "backend.wait-for-postgres" . | nindent 8 }}
         {{- include "backend.wait-for-mongo" . | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}

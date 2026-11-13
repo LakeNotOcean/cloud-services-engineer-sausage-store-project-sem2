@@ -6,7 +6,6 @@ metadata:
     argocd.argoproj.io/sync-wave: "-1"
 spec:
   backoffLimit: 3
-  ttlSecondsAfterFinished: 300   # Автоочистка через 5 минут после завершения
   template:
     metadata:
       labels:

@@ -5,12 +5,11 @@ metadata:
 spec:
   project: s18727602
   destination:
-    namespace: r-devops-magistracy-project-3sem-1646581078
+    namespace: ep-namespace-a4970852f9974b88b52fea26-g1
     server: 'https://kubernetes.default.svc'
   source:
-    path: ''
-    repoURL: 'https://nexus.cloud-services-engineer.education-services.ru/repository/nevskiy-va-sausage-store/'
-    targetRevision: 0.1.1
+    repoURL: 'https://nexus.infra.students-projects.ru/repository/s18727602-helm'
+    targetRevision: '0.1.*'
     chart: sausage-store
     helm:
       values: |
@@ -51,19 +50,16 @@ spec:
           image:
             repository: ""
             name: sausage-backend
-            tag: latest
 
         backend-report:
           image:
             repository: ""
             name: sausage-backend-report
-            tag: latest
 
         frontend:
           image:
             repository: ""
             name: sausage-frontend
-            tag: latest
 
         infra:
           postgresql:
@@ -72,3 +68,8 @@ spec:
           mongodb:
             storage: 1Gi
             storageClassName: "yc-network-hdd"
+
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: false

@@ -7,7 +7,7 @@ metadata:
   labels:
     {{- include "mongodb.labels" . | nindent 4 }}
 spec:
-  serviceName: {{ .Release.Name }}-{{ .Chart.Name }}
+  serviceName: {{ .Release.Name }}-{{ .Chart.Name }}-service
   replicas: 1
   selector:
     matchLabels:
@@ -41,6 +41,9 @@ spec:
       name: mongodb-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
+      {{- with .Values.storageClassName }}
+      storageClassName: {{ . }}
+      {{- end }}
       resources:
         requests:
           storage: {{.Values.storage }}

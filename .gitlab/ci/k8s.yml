@@ -12,9 +12,9 @@ docker_build_push:
   before_script:
     - docker login -u "${DOCKER_USER}" -p "${DOCKER_PASSWORD}"
   script:
-    - docker build --build-arg VERSION="${CI_COMMIT_SHA}" --push -t "${BACKEND_IMAGE}" ./backend/
-    - docker build --push -t "${FRONTEND_IMAGE}" ./frontend/
-    - docker build --push -t "${REPORT_IMAGE}" ./backend-report/
+    - docker build --build-arg VERSION="${CI_COMMIT_SHA}" --push -t "${BACKEND_IMAGE}" -t "${DOCKER_USER}/sausage-backend:${CI_COMMIT_SHORT_SHA}" ./backend/
+    - docker build --push -t "${FRONTEND_IMAGE}" -t "${DOCKER_USER}/sausage-frontend:${CI_COMMIT_SHORT_SHA}" ./frontend/
+    - docker build --push -t "${REPORT_IMAGE}" -t "${DOCKER_USER}/sausage-backend-report:${CI_COMMIT_SHORT_SHA}" ./backend-report/
   rules:
     - if: '$OPERATION == "k8s"'
   allow_failure: false
@@ -27,9 +27,12 @@ helm_package_push:
     name: alpine/helm:4.3
     entrypoint: [""]
   before_script:
-    - apk add --no-cache curl
+    - apk add --no-cache curl yq
   script:
-    - helm package "${CHART_ROOT}"
+    - cd "${CHART_ROOT}"
+    - yq -i '.backend.image.tag = strenv(CI_COMMIT_SHORT_SHA) | ."backend-report".image.tag = strenv(CI_COMMIT_SHORT_SHA) | .frontend.image.tag = strenv(CI_COMMIT_SHORT_SHA)' values.yaml
+    - yq -i '.version = "0.1." + strenv(CI_PIPELINE_IID)' Chart.yaml
+    - helm package .
     - curl --fail -u "${NEXUS_HELM_REPO_USER}:${NEXUS_HELM_REPO_PASSWORD}" --upload-file sausage-store-*.tgz "${NEXUS_HELM_REPO}/"
   needs:
     - docker_build_push
