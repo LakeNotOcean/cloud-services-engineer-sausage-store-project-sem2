@@ -2,6 +2,8 @@
   image:
     name: willhallonline/ansible:latest
     entrypoint: [""]
+  tags:
+    - docker
   variables:
     ANSIBLE_ROOT: "${CI_PROJECT_DIR}/ansible"
     ANSIBLE_INVENTORY: "${ANSIBLE_ROOT}/inventory/vm.yml"
