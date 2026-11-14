@@ -20,6 +20,7 @@ ingress:
     host: s18727602.2sem.students-projects.ru
     path: /
     pathType: Prefix
+    tlsSecret: ""
 
 # запрос ресурсов
 resources:

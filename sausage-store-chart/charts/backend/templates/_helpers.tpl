@@ -49,13 +49,19 @@ app.kubernetes.io/part-of: {{ .Release.Name }}
     - sh
     - -c
     - |
+      i=0
       until mongosh --host {{ .Release.Name }}-mongodb-service \
           --port {{ .Values.global.mongoPort }} \
           --username "{{ .Values.global.reportDbUser }}" \
           --password "{{ .Values.global.reportDbPassword }}" \
           --authenticationDatabase "{{ .Values.global.reportDbName }}" \
           --eval "db.runCommand({ping: 1})"; do
-        echo "Waiting for MongoDB..."
+        i=$((i+1))
+        if [ "$i" -ge 60 ]; then
+          echo "MongoDB not ready after 60 attempts"
+          exit 1
+        fi
+        echo "Waiting for MongoDB... ($i/60)"
         sleep 3
       done
   resources:
@@ -69,8 +75,14 @@ app.kubernetes.io/part-of: {{ .Release.Name }}
     - sh
     - -c
     - |
+      i=0
       until pg_isready -h {{ .Release.Name }}-postgresql-service -p {{ .Values.global.postgresPort }}; do
-        echo "Waiting for PostgreSQL..."
+        i=$((i+1))
+        if [ "$i" -ge 60 ]; then
+          echo "PostgreSQL not ready after 60 attempts"
+          exit 1
+        fi
+        echo "Waiting for PostgreSQL... ($i/60)"
         sleep 3
       done
   resources:

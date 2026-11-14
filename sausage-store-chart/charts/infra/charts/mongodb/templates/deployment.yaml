@@ -26,6 +26,16 @@ spec:
             name: {{ .Release.Name }}-{{ .Chart.Name }}-secret
         ports:
         - containerPort: {{ .Values.containerPort }}
+        readinessProbe:
+          tcpSocket:
+            port: {{ .Values.containerPort }}
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket:
+            port: {{ .Values.containerPort }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
         resources:
           requests:
             memory: {{ .Values.resources.requests.memory | default "256Mi" }}

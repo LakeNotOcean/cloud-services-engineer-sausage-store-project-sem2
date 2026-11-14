@@ -7,7 +7,9 @@ metadata:
     {{- include "backend-report.labels" . | nindent 4 }}
 spec:
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  {{- if not .Values.hpa.enabled }}
   replicas: {{ .Values.replicas }}
+  {{- end }}
   strategy:
 {{ toYaml .Values.strategy | indent 4 }}
   selector:

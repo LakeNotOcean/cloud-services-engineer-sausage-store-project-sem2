@@ -4,6 +4,7 @@ metadata:
   name: {{ .Release.Name }}-mongodb-init
   annotations:
     argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-options: Replace=true,Force=true
 spec:
   backoffLimit: 3
   template:
@@ -19,8 +20,14 @@ spec:
             - sh
             - -c
             - |
+              i=0
               until nc -z {{ .Release.Name }}-mongodb-service {{ .Values.global.mongoPort }}; do
-                echo "Waiting for MongoDB..."
+                i=$((i+1))
+                if [ "$i" -ge 60 ]; then
+                  echo "MongoDB not ready after 60 attempts"
+                  exit 1
+                fi
+                echo "Waiting for MongoDB... ($i/60)"
                 sleep 3
               done
           resources:
