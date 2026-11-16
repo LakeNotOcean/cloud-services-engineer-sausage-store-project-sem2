@@ -65,7 +65,7 @@ app.kubernetes.io/part-of: {{ .Release.Name }}
         sleep 3
       done
   resources:
-    {{- toYaml .Values.global.initContainers.mongo.resources | nindent 4 }}
+    {{- toYaml .Values.global.initContainers.mongo.resources | nindent 4 }}  
 {{- end }}
 
 {{- define "backend.wait-for-postgres" -}}
