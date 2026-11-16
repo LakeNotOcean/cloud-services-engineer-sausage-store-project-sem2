@@ -13,7 +13,9 @@ docker_build_push:
     - docker
   image: docker:27-cli
   services:
-    - docker:27-dind
+    - name: docker:27-dind
+      alias: docker
+      command: ["--registry-mirror=https://dockerhub.timeweb.cloud"]
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
