@@ -24,6 +24,11 @@ app.kubernetes.io/part-of: {{ .Release.Name }}
 {{- define "backend-report.wait-for-mongo" -}}
 - name: wait-for-mongo
   image: mongo:7.0
+  securityContext:
+    runAsUser: 999
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
   command:
     - sh
     - -c

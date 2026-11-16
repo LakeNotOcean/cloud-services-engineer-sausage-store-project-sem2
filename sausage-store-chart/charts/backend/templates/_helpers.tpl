@@ -45,6 +45,11 @@ app.kubernetes.io/part-of: {{ .Release.Name }}
 {{- define "backend.wait-for-mongo" -}}
 - name: wait-for-mongo
   image: mongo:7.0
+  securityContext:
+    runAsUser: 999
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
   command:
     - sh
     - -c
@@ -71,6 +76,11 @@ app.kubernetes.io/part-of: {{ .Release.Name }}
 {{- define "backend.wait-for-postgres" -}}
 - name: wait-for-postgres
   image: postgres:13-alpine
+  securityContext:
+    runAsUser: 70
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
   command:
     - sh
     - -c
