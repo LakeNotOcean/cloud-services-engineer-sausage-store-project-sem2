@@ -63,6 +63,7 @@ readinessProbe:
 
 # vpa 
 vpa:
+  enabled: false
   updatePolicy:
     updateMode: "Off"
   resourcePolicy:
