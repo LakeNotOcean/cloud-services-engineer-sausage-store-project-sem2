@@ -9,6 +9,10 @@
 docker_build_push:
   extends: .k8s_defaults
   stage: build
+  docker_build_push:
+  tags: 
+    - docker
+  image: docker:27-cli
   before_script:
     - docker login -u "${DOCKER_USER}" -p "${DOCKER_PASSWORD}"
   script:
