@@ -21,6 +21,7 @@ docker_build_push:
     DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker login -u "${DOCKER_USER}" -p "${DOCKER_PASSWORD}"
+    # Для кэширования
     - docker buildx create --driver docker-container --name ci --use
   script:
     - |
