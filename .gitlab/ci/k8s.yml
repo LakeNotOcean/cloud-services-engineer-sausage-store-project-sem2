@@ -21,19 +21,20 @@ docker_build_push:
     DOCKER_TLS_CERTDIR: ""
   before_script:
     - docker login -u "${DOCKER_USER}" -p "${DOCKER_PASSWORD}"
+    - docker buildx create --driver docker-container --name ci --use
   script:
     - |
-      docker build --build-arg VERSION="${CI_COMMIT_SHA}" \
+      docker buildx build --build-arg VERSION="${CI_COMMIT_SHA}" \
         --cache-from type=registry,ref=${DOCKER_USER}/sausage-backend:buildcache \
         --cache-to type=registry,ref=${DOCKER_USER}/sausage-backend:buildcache,mode=max \
         --push -t "${BACKEND_IMAGE}" -t "${DOCKER_USER}/sausage-backend:${CI_COMMIT_SHORT_SHA}" ./backend/
     - |
-      docker build \
+      docker buildx build \
         --cache-from type=registry,ref=${DOCKER_USER}/sausage-frontend:buildcache \
         --cache-to type=registry,ref=${DOCKER_USER}/sausage-frontend:buildcache,mode=max \
         --push -t "${FRONTEND_IMAGE}" -t "${DOCKER_USER}/sausage-frontend:${CI_COMMIT_SHORT_SHA}" ./frontend/
     - |
-      docker build \
+      docker buildx build \
         --cache-from type=registry,ref=${DOCKER_USER}/sausage-backend-report:buildcache \
         --cache-to type=registry,ref=${DOCKER_USER}/sausage-backend-report:buildcache,mode=max \
         --push -t "${REPORT_IMAGE}" -t "${DOCKER_USER}/sausage-backend-report:${CI_COMMIT_SHORT_SHA}" ./backend-report/
