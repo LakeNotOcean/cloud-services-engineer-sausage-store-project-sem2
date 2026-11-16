@@ -6,7 +6,7 @@ FROM node:26-alpine AS base
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci && npm cache clean --force
+RUN --mount=type=cache,target=/root/.npm npm ci
 
 # стенд для dev-сервера
 FROM base AS dev

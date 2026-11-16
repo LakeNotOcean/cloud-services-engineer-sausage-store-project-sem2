@@ -22,9 +22,21 @@ docker_build_push:
   before_script:
     - docker login -u "${DOCKER_USER}" -p "${DOCKER_PASSWORD}"
   script:
-    - docker build --build-arg VERSION="${CI_COMMIT_SHA}" --push -t "${BACKEND_IMAGE}" -t "${DOCKER_USER}/sausage-backend:${CI_COMMIT_SHORT_SHA}" ./backend/
-    - docker build --push -t "${FRONTEND_IMAGE}" -t "${DOCKER_USER}/sausage-frontend:${CI_COMMIT_SHORT_SHA}" ./frontend/
-    - docker build --push -t "${REPORT_IMAGE}" -t "${DOCKER_USER}/sausage-backend-report:${CI_COMMIT_SHORT_SHA}" ./backend-report/
+    - |
+      docker build --build-arg VERSION="${CI_COMMIT_SHA}" \
+        --cache-from type=registry,ref=${DOCKER_USER}/sausage-backend:buildcache \
+        --cache-to type=registry,ref=${DOCKER_USER}/sausage-backend:buildcache,mode=max \
+        --push -t "${BACKEND_IMAGE}" -t "${DOCKER_USER}/sausage-backend:${CI_COMMIT_SHORT_SHA}" ./backend/
+    - |
+      docker build \
+        --cache-from type=registry,ref=${DOCKER_USER}/sausage-frontend:buildcache \
+        --cache-to type=registry,ref=${DOCKER_USER}/sausage-frontend:buildcache,mode=max \
+        --push -t "${FRONTEND_IMAGE}" -t "${DOCKER_USER}/sausage-frontend:${CI_COMMIT_SHORT_SHA}" ./frontend/
+    - |
+      docker build \
+        --cache-from type=registry,ref=${DOCKER_USER}/sausage-backend-report:buildcache \
+        --cache-to type=registry,ref=${DOCKER_USER}/sausage-backend-report:buildcache,mode=max \
+        --push -t "${REPORT_IMAGE}" -t "${DOCKER_USER}/sausage-backend-report:${CI_COMMIT_SHORT_SHA}" ./backend-report/
   rules:
     - if: '$OPERATION == "k8s"'
   allow_failure: false

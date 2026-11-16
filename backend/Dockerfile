@@ -6,10 +6,10 @@ FROM maven:3.9.16-amazoncorretto-17-debian AS builder
 # задаём переменную VERSION, которая будет использоваться для сборки проекта
 ARG VERSION=${VERSION}
 WORKDIR /usr/src/app
+COPY pom.xml checkstyle.xml ./
+RUN --mount=type=cache,target=/root/.m2 mvn dependency:go-offline
 COPY ./src ./src
-COPY *.xml ./
-
-RUN mvn package -Dversion.application=${VERSION}
+RUN --mount=type=cache,target=/root/.m2 mvn package -Dversion.application=${VERSION}
 
 # release
 FROM amazoncorretto:17-alpine3.24-jdk
