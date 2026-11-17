@@ -40,6 +40,8 @@ app.kubernetes.io/part-of: {{ .Release.Name }}
     configMapKeyRef:
       name: {{ .Release.Name }}-{{ .Chart.Name }}-conf
       key: log_path
+- name: SPRING_AUTOCONFIGURE_EXCLUDE
+  value: "org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration,org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration,org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration"
 {{- end }}
 
 {{- define "backend.wait-for-mongo" -}}
