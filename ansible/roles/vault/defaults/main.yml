@@ -3,7 +3,7 @@ vault_container_name: vault
 vault_image: "hashicorp/vault:1.17.6"
 vault_config_dir: /etc/vault.d
 vault_data_dir: /opt/vault/data
-vault_port: 8200
+vault_port: 443
 
 # токен, root по умолчанию
 vault_dev_root_token_id: "{{ lookup('env', 'VAULT_DEV_ROOT_TOKEN_ID') | default('root', true) }}"

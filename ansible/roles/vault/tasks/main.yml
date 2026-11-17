@@ -21,7 +21,7 @@
       VAULT_DEV_ROOT_TOKEN_ID: "{{ vault_dev_root_token_id }}"
     command: >-
       vault server -dev
-      -dev-listen-address=0.0.0.0:{{ vault_port }}
+      -dev-listen-address=0.0.0.0:8200
 
 # ждем
 - name: Wait for Vault API

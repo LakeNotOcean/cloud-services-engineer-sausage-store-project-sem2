@@ -40,8 +40,8 @@ spec:
                   cpu: "100m"
           vault:
             enabled: true
-            host: "89.169.151.100"
-            port: 8200
+            host: "51.250.70.116"
+            port: 443
             scheme: http
             name: vault
             vaultToken: someToken

@@ -15,6 +15,11 @@ locals {
         description = "Allow HTTP on port 8200"
         protocol    = "TCP"
         port        = 8200
+      },
+      {
+        description = "Allow Vault on port 443"
+        protocol    = "TCP"
+        port        = 443
       }
     ]
     egress = [
