@@ -16,6 +16,8 @@ spec:
       app: {{ .Release.Name }}-{{ .Chart.Name }}
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       labels:
         app: {{ .Release.Name }}-{{ .Chart.Name }}
     spec:

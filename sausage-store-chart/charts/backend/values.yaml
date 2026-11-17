@@ -50,6 +50,11 @@ resources:
     cpu: "1"
 
 # проверка
+startupProbe:
+  enabled: true
+  path: /actuator/health
+  failureThreshold: 30
+  periodSeconds: 5
 livenessProbe:
   enabled: true
   path: /actuator/health
