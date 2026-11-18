@@ -15,11 +15,6 @@ locals {
         description = "Allow HTTP on port 8200"
         protocol    = "TCP"
         port        = 8200
-      },
-      {
-        description = "Allow Vault on port 443"
-        protocol    = "TCP"
-        port        = 443
       }
     ]
     egress = [
@@ -38,6 +33,13 @@ locals {
       subnet_name = "dev-subnet"
       v4_cidr     = "192.168.10.0/24"
       sg_name     = "dev-sg"
+      extra_ingress = [
+        {
+          description = "Allow Vault on port 443"
+          protocol    = "TCP"
+          port        = 443
+        }
+      ]
       labels = {
         environment = "dev"
         project     = "sausage-store"
@@ -45,9 +47,10 @@ locals {
       }
     }
     prod = {
-      subnet_name = "prod-subnet"
-      v4_cidr     = "192.168.20.0/24"
-      sg_name     = "prod-sg"
+      subnet_name   = "prod-subnet"
+      v4_cidr       = "192.168.20.0/24"
+      sg_name       = "prod-sg"
+      extra_ingress = []
       labels = {
         environment = "prod"
         project     = "sausage-store"
@@ -74,7 +77,7 @@ resource "yandex_vpc_security_group" "sg" {
   network_id = yandex_vpc_network.network.id
 
   dynamic "ingress" {
-    for_each = local.sg_common_rules.ingress
+    for_each = concat(local.sg_common_rules.ingress, each.value.extra_ingress)
     content {
       description    = ingress.value.description
       protocol       = ingress.value.protocol
