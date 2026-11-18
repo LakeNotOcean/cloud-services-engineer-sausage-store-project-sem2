@@ -40,7 +40,7 @@ spec:
                   cpu: "100m"
           vault:
             enabled: true
-            host: "51.250.70.116"
+            host: "84.201.133.236"
             port: 443
             scheme: http
             name: vault

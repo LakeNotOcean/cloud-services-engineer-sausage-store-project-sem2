@@ -25,8 +25,8 @@ global:
           cpu: "100m"
   vault:
     enabled: true
-    host: "93.77.183.14"
-    port: 8201
+    host: "84.201.133.236"
+    port: 443
     scheme: http
     name: vault
     vaultToken: someToken
