@@ -17,12 +17,6 @@ app.kubernetes.io/part-of: {{ .Release.Name }}
   value: "{{ .Values.global.vault.port }}"
 - name: SPRING_CLOUD_VAULT_SCHEME
   value: "{{ .Values.global.vault.scheme }}"
-- name: SPRING_DATA_MONGODB_HOST
-  value: {{ .Release.Name }}-mongodb-service
-- name: SPRING_DATA_MONGODB_PORT
-  value: "{{ .Values.global.mongoPort }}"
-- name: SPRING_DATA_MONGODB_DATABASE
-  value: "{{ .Values.global.reportDbName }}"
 - name: SPRING_DATASOURCE_URL
   value: "jdbc:postgresql://{{ .Release.Name }}-postgresql-service:{{ .Values.global.postgresPort }}/{{ .Values.global.postgresDbName }}"
 - name: REPORT_PATH

@@ -14,6 +14,7 @@
     restart_policy: unless-stopped
     ipc_mode: host
     ports:
+      - "8200:8200"
       - "{{ vault_port }}:8200"
     volumes:
       - "{{ vault_data_dir }}:/vault/data"
